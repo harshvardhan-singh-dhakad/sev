@@ -67,6 +67,74 @@ export interface ProductCategory {
   updatedAt: string;
 }
 
+// ---- Planned Final Schema Types (Paise & Grams) ----
+export type SpiceLevel = 'mild' | 'medium' | 'hot';
+
+export interface CatalogImage {
+  src: string;
+  alt: string;
+  sort: number;
+  is_primary: boolean;
+  variant_ids: string[];
+}
+
+export interface CatalogVariant {
+  id: string;
+  label: string;
+  weight_grams: number;
+  price: number; // in integer paise
+  mrp?: number | null; // in integer paise, optional
+  sku: string;
+  stock_qty: number | null; // null = untracked
+  min_qty: number; // default 1
+  max_qty: number | null;
+  step: number; // default 1
+  is_active: boolean;
+  sort_order: number;
+  badge: string | null;
+}
+
+export interface NutritionPer100g {
+  energy_kcal?: number;
+  protein_g?: number;
+  carbohydrates_g?: number;
+  fat_g?: number;
+  sodium_mg?: number;
+  dietary_fiber_g?: number;
+}
+
+export interface CatalogProduct {
+  slug: string;
+  name: string;
+  category: string; // slug of category
+  short_description: string;
+  description: string;
+  spice_level: SpiceLevel;
+  ingredients: string | null;
+  allergens: string | null;
+  shelf_life_days: number;
+  storage: string;
+  veg_mark: 'veg' | 'non-veg';
+  country_of_origin: string;
+  usage_ideas: string[];
+  nutrition_per_100g?: NutritionPer100g | null;
+  status: 'active' | 'draft' | 'archived';
+  featured: boolean;
+  badge: string | null;
+  default_variant_id: string;
+  images: CatalogImage[];
+  variants: CatalogVariant[];
+}
+
+export interface StoreSettings {
+  min_cart_value: number; // 19900 paise (Rs 199)
+  free_shipping_above: number | null;
+  fssai_no: string | null;
+  manufacturer: string | null;
+  customer_care: string | null;
+  bulk_minimum_kg: number;
+}
+
 // ---- Order Types ----
 export type OrderStatus =
   | 'pending'

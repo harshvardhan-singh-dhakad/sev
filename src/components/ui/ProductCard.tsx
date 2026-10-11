@@ -65,7 +65,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
     >
       {/* Image */}
       <div className="product-card-image">
-        <Link href={`/product/${product.slug}`} aria-label={product.name}>
+        <Link href={`/shop/${product.slug}`} aria-label={product.name}>
           {product.thumbnail ? (
             <Image
               src={product.thumbnail}
@@ -124,7 +124,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
             />
           </button>
           <Link
-            href={`/product/${product.slug}`}
+            href={`/shop/${product.slug}`}
             className="w-8 h-8 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-blue-50 transition-colors"
             aria-label="Quick view"
           >
@@ -150,7 +150,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
         )}
 
         {/* Name */}
-        <Link href={`/product/${product.slug}`}>
+        <Link href={`/shop/${product.slug}`}>
           <h3
             className="font-semibold text-gray-900 mb-1 line-clamp-2 hover:text-blue-600 transition-colors"
             style={{ fontFamily: 'var(--font-outfit)', fontSize: '0.9375rem' }}

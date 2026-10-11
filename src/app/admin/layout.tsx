@@ -1,234 +1,409 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Package,
+  Layers,
+  TableProperties,
   ShoppingCart,
   Users,
-  Settings,
-  LogOut,
-  Box,
-  MessageSquare,
+  Briefcase,
+  Gift,
+  Mail,
   FileText,
-  HelpCircle,
-  Truck,
+  Image as ImageIcon,
+  Settings as SettingsIcon,
+  Shield,
+  History,
+  Menu,
+  X,
+  LogOut,
   ExternalLink,
+  ChevronRight,
+  Sparkles,
 } from 'lucide-react';
-import { useAuthStore } from '@/lib/store';
-import { cn } from '@/lib/utils';
+import toast from 'react-hot-toast';
+import { Role } from '@/lib/auth/permissions';
 
-const ADMIN_LINKS = [
-  { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { label: 'Orders', href: '/admin/orders', icon: ShoppingCart },
-  { label: 'Products', href: '/admin/products', icon: Package },
-  { label: 'Categories', href: '/admin/categories', icon: Box },
-  { label: 'Bulk Enquiries', href: '/admin/bulk-enquiries', icon: Truck },
-  { label: 'Samples', href: '/admin/samples', icon: Package },
-  { label: 'Blog', href: '/admin/blog', icon: FileText },
-  { label: 'Customers', href: '/admin/customers', icon: Users },
-  { label: 'Reviews', href: '/admin/reviews', icon: MessageSquare },
-  { label: 'FAQs', href: '/admin/faqs', icon: HelpCircle },
-  { label: 'Settings', href: '/admin/settings', icon: Settings },
+interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+}
+
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  roleRequired?: Role[];
+}
+
+interface NavGroup {
+  group: string;
+  items: NavItem[];
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    group: 'Overview',
+    items: [{ label: 'Dashboard', href: '/admin', icon: LayoutDashboard }],
+  },
+  {
+    group: 'Catalog',
+    items: [
+      { label: 'Products', href: '/admin/products', icon: Package },
+      { label: 'Categories', href: '/admin/categories', icon: Layers },
+      { label: 'Bulk Price Grid', href: '/admin/price-grid', icon: TableProperties },
+    ],
+  },
+  {
+    group: 'Sales & CRM',
+    items: [
+      { label: 'Orders', href: '/admin/orders', icon: ShoppingCart },
+      { label: 'Customers', href: '/admin/customers', icon: Users },
+    ],
+  },
+  {
+    group: 'Enquiries',
+    items: [
+      { label: 'Bulk Enquiries', href: '/admin/bulk-enquiries', icon: Briefcase },
+      { label: 'Sample Requests', href: '/admin/samples', icon: Gift },
+      { label: 'Contact Messages', href: '/admin/contact-messages', icon: Mail },
+      { label: 'Subscribers', href: '/admin/subscribers', icon: Sparkles },
+    ],
+  },
+  {
+    group: 'Content & Media',
+    items: [
+      { label: 'Blog Posts', href: '/admin/blog', icon: FileText },
+      { label: 'Media Library', href: '/admin/media', icon: ImageIcon },
+    ],
+  },
+  {
+    group: 'Configuration',
+    items: [
+      { label: 'Store Settings', href: '/admin/settings', icon: SettingsIcon },
+      { label: 'Staff & Roles', href: '/admin/staff', icon: Shield, roleRequired: ['owner'] },
+      { label: 'Audit Log', href: '/admin/audit-log', icon: History, roleRequired: ['owner', 'manager'] },
+    ],
+  },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, isAdmin, isLoading } = useAuthStore();
-  const router = useRouter();
   const pathname = usePathname();
+  const router = useRouter();
+
+  const [user, setUser] = useState<AdminUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  // Skip admin shell for login page
+  const isLoginPage = pathname === '/admin/login';
 
   useEffect(() => {
-    if (!isLoading) {
-      if (!user) {
-        router.push('/login');
-      } else if (!isAdmin) {
-        router.push('/');
+    if (isLoginPage) {
+      setLoading(false);
+      return;
+    }
+
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/admin/auth/me');
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.user);
+        } else {
+          router.push('/admin/login');
+        }
+      } catch {
+        router.push('/admin/login');
+      } finally {
+        setLoading(false);
       }
     }
-  }, [user, isAdmin, isLoading, router]);
 
-  if (isLoading || !user || !isAdmin) {
+    checkAuth();
+  }, [pathname, isLoginPage, router]);
+
+  // Close mobile drawer on route navigation
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [pathname]);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/auth/logout', { method: 'POST' });
+      toast.success('Signed out successfully');
+      router.push('/admin/login');
+      router.refresh();
+    } catch {
+      router.push('/admin/login');
+    }
+  };
+
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
+
+  if (loading) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: 'var(--color-bg)' }}
-      >
-        <div
-          className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-          style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }}
-        />
+      <div className="min-h-screen flex items-center justify-center bg-bg">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          <span className="text-xs font-semibold text-gray-500">Verifying credentials...</span>
+        </div>
       </div>
     );
   }
 
-  const handleLogout = async () => {
-    try {
-      const { getFirebaseAuth } = await import('@/lib/firebase');
-      const { signOut } = await import('firebase/auth');
-      await signOut(getFirebaseAuth());
-      useAuthStore.getState().logout();
-      router.push('/login');
-    } catch (e) {
-      console.error('Logout error', e);
-    }
-  };
-
-  const currentPageLabel = ADMIN_LINKS.find(l =>
-    l.href === '/admin'
-      ? pathname === '/admin'
-      : (l.href !== '/admin' && pathname.startsWith(l.href))
-  )?.label || 'Dashboard';
+  const roleBadgeStyle =
+    user?.role === 'owner'
+      ? 'bg-red-100 text-red-800 border-red-200'
+      : user?.role === 'manager'
+      ? 'bg-blue-100 text-blue-800 border-blue-200'
+      : user?.role === 'editor'
+      ? 'bg-green-100 text-green-800 border-green-200'
+      : 'bg-amber-100 text-amber-800 border-amber-200';
 
   return (
-    <div className="min-h-screen flex" style={{ background: 'var(--color-bg)' }}>
-      {/* Sidebar */}
-      <aside
-        className="w-64 flex flex-col flex-shrink-0 fixed h-full z-20"
-        style={{
-          background: 'var(--color-bg-surface)',
-          borderRight: '1px solid var(--color-border)',
-        }}
+    <div className="min-h-screen flex flex-col bg-bg text-ink">
+      {/* Top Header Bar */}
+      <header
+        className="sticky top-0 z-30 h-16 bg-white border-b border-border px-4 sm:px-6 flex items-center justify-between shadow-sm"
       >
-        {/* Logo */}
-        <div className="p-5" style={{ borderBottom: '1px solid var(--color-border)' }}>
-          <Link href="/admin" className="flex items-center gap-3">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm"
-              style={{
-                background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))',
-                color: '#0A0E1A',
-                fontFamily: 'var(--font-outfit)',
-              }}
-            >
-              R
-            </div>
-            <div>
-              <p
-                className="font-bold text-base leading-tight"
-                style={{ fontFamily: 'var(--font-outfit)', color: 'var(--color-text)' }}
-              >
-                Rasvat
-              </p>
-              <p className="text-[0.65rem] leading-tight" style={{ color: 'var(--color-text-muted)' }}>
-                Admin Panel
-              </p>
-            </div>
-          </Link>
-        </div>
-
-        {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
-          {ADMIN_LINKS.map((link) => {
-            const isActive = link.href === '/admin'
-              ? pathname === '/admin'
-              : pathname.startsWith(link.href);
-
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
-                  isActive
-                    ? 'text-[#0A0E1A]'
-                    : 'hover:bg-[var(--color-bg-hover)]'
-                )}
-                style={
-                  isActive
-                    ? {
-                        background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))',
-                        color: '#0A0E1A',
-                      }
-                    : { color: 'var(--color-text-secondary)' }
-                }
-              >
-                <link.icon size={17} />
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Footer */}
-        <div className="p-3 space-y-1" style={{ borderTop: '1px solid var(--color-border)' }}>
-          <Link
-            href="/"
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors"
-            style={{ color: 'var(--color-text-muted)' }}
-            target="_blank"
-          >
-            <ExternalLink size={16} />
-            View Store
-          </Link>
+        <div className="flex items-center gap-3 sm:gap-4">
+          {/* Mobile Menu Trigger */}
           <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors w-full"
-            style={{ color: 'var(--color-text-muted)' }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.color = '#FCA5A5';
-              (e.currentTarget as HTMLElement).style.background = 'rgb(239 68 68 / 0.08)';
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)';
-              (e.currentTarget as HTMLElement).style.background = 'transparent';
-            }}
+            type="button"
+            onClick={() => setMobileSidebarOpen(true)}
+            className="lg:hidden p-2 rounded-xl text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
+            aria-label="Open sidebar navigation"
           >
-            <LogOut size={16} />
-            Sign Out
+            <Menu size={20} />
           </button>
-        </div>
-      </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 ml-64 min-h-screen flex flex-col">
-        {/* Header */}
-        <header
-          className="h-16 flex items-center justify-between px-8 sticky top-0 z-10"
-          style={{
-            background: 'rgba(9, 14, 27, 0.95)',
-            backdropFilter: 'blur(12px)',
-            borderBottom: '1px solid var(--color-border)',
-          }}
-        >
-          <h2
-            className="font-bold text-base"
-            style={{ fontFamily: 'var(--font-outfit)', color: 'var(--color-text)' }}
-          >
-            {currentPageLabel}
-          </h2>
-          <div className="flex items-center gap-3">
-            <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-              {user.displayName}
+          {/* Brand stamp on desktop */}
+          <div className="hidden lg:flex items-center gap-2 pr-4 border-r border-border">
+            <span
+              className="text-lg font-black tracking-tight text-ink"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              RASVAT
             </span>
-            {user.photoURL ? (
-              <img
-                src={user.photoURL}
-                alt="Admin"
-                className="w-8 h-8 rounded-full"
-                style={{ border: '2px solid var(--color-border-bright)' }}
-              />
-            ) : (
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                style={{
-                  background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))',
-                  color: '#0A0E1A',
-                }}
-              >
-                {user.displayName?.charAt(0) || 'A'}
-              </div>
-            )}
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-secondary text-ink uppercase tracking-wider">
+              PORTAL
+            </span>
           </div>
-        </header>
 
-        {/* Page Content */}
-        <div className="p-8 flex-1 overflow-auto">
-          {children}
+          {/* Breadcrumb representation */}
+          <nav aria-label="Admin breadcrumb" className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-gray-500">
+            <Link href="/admin" className="hover:text-primary transition-colors">
+              Admin
+            </Link>
+            {pathname !== '/admin' && (
+              <>
+                <ChevronRight size={13} className="text-gray-400" />
+                <span className="text-ink capitalize">
+                  {pathname.split('/').pop()?.replace(/-/g, ' ')}
+                </span>
+              </>
+            )}
+          </nav>
         </div>
-      </main>
+
+        {/* Right Topbar Actions */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Link
+            href="/shop"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 bg-gray-50 hover:bg-gray-100 border border-border transition-colors"
+          >
+            <span>Storefront</span>
+            <ExternalLink size={13} />
+          </Link>
+
+          {/* User Profile & Role */}
+          <div className="flex items-center gap-2 pl-3 border-l border-border">
+            <div className="text-right hidden sm:block">
+              <div className="text-xs font-bold text-ink leading-tight">{user?.name}</div>
+              <span
+                className={`inline-block px-1.5 py-0.2 rounded text-[10px] font-black uppercase tracking-wider border ${roleBadgeStyle}`}
+              >
+                {user?.role}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="p-2 rounded-xl text-gray-500 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors"
+              title="Sign Out"
+              aria-label="Sign out of admin"
+            >
+              <LogOut size={18} />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Body: Sidebar + Main Viewport */}
+      <div className="flex-1 flex min-h-0">
+        {/* Desktop Sidebar (>=1024px) */}
+        <aside
+          className="hidden lg:flex flex-col w-64 flex-shrink-0 bg-white border-r border-border p-4 overflow-y-auto"
+          style={{ maxHeight: 'calc(100vh - 4rem)' }}
+        >
+          <nav className="space-y-6">
+            {NAV_GROUPS.map((group) => {
+              const visibleItems = group.items.filter(
+                (item) => !item.roleRequired || (user && item.roleRequired.includes(user.role))
+              );
+              if (visibleItems.length === 0) return null;
+
+              return (
+                <div key={group.group}>
+                  <h2 className="px-3 text-[10px] font-black uppercase tracking-wider text-gray-400 mb-1.5">
+                    {group.group}
+                  </h2>
+                  <ul className="space-y-1">
+                    {visibleItems.map((item) => {
+                      const isActive = pathname === item.href;
+                      const Icon = item.icon;
+                      return (
+                        <li key={item.href}>
+                          <Link
+                            href={item.href}
+                            className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                              isActive
+                                ? 'bg-primary text-white shadow-sm'
+                                : 'text-gray-700 hover:bg-gray-50 hover:text-ink'
+                            }`}
+                          >
+                            <Icon size={16} />
+                            <span>{item.label}</span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
+          </nav>
+        </aside>
+
+        {/* Mobile Sidebar Off-Canvas Drawer (<1024px) */}
+        {mobileSidebarOpen && (
+          <div
+            className="fixed inset-0 z-50 lg:hidden flex"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Admin Navigation Menu"
+          >
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+              onClick={() => setMobileSidebarOpen(false)}
+              aria-hidden="true"
+            />
+
+            {/* Off-canvas Sheet */}
+            <div className="relative w-72 max-w-[85vw] h-full bg-white shadow-2xl flex flex-col z-10 p-5 overflow-y-auto">
+              <div className="flex items-center justify-between pb-4 border-b border-border mb-4">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-lg font-black tracking-tight text-ink"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                  >
+                    RASVAT
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-secondary text-ink">
+                    PORTAL
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMobileSidebarOpen(false)}
+                  className="p-1 rounded-lg text-gray-500 hover:bg-gray-100"
+                  aria-label="Close navigation"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* User badge on mobile */}
+              <div className="p-3 rounded-xl bg-gray-50 border border-border mb-4 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-ink">{user?.name}</div>
+                  <div className="text-[11px] text-gray-500">{user?.email}</div>
+                </div>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${roleBadgeStyle}`}>
+                  {user?.role}
+                </span>
+              </div>
+
+              <nav className="space-y-6 flex-1">
+                {NAV_GROUPS.map((group) => {
+                  const visibleItems = group.items.filter(
+                    (item) => !item.roleRequired || (user && item.roleRequired.includes(user.role))
+                  );
+                  if (visibleItems.length === 0) return null;
+
+                  return (
+                    <div key={group.group}>
+                      <h2 className="px-2 text-[10px] font-black uppercase tracking-wider text-gray-400 mb-1.5">
+                        {group.group}
+                      </h2>
+                      <ul className="space-y-1">
+                        {visibleItems.map((item) => {
+                          const isActive = pathname === item.href;
+                          const Icon = item.icon;
+                          return (
+                            <li key={item.href}>
+                              <Link
+                                href={item.href}
+                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                  isActive
+                                    ? 'bg-primary text-white shadow-sm'
+                                    : 'text-gray-700 hover:bg-gray-50'
+                                }`}
+                              >
+                                <Icon size={16} />
+                                <span>{item.label}</span>
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </nav>
+
+              <div className="pt-4 border-t border-border mt-6">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full py-2.5 px-3 rounded-xl text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 flex items-center justify-center gap-2"
+                >
+                  <LogOut size={16} />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Content Area */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

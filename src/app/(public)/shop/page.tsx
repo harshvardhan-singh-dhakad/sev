@@ -1,60 +1,185 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
+import Link from 'next/link';
+import { ChevronRight, Sparkles, PackageOpen } from 'lucide-react';
 import PublicLayout from '@/components/layout/PublicLayout';
-import { ShopClient } from './ShopClient';
+import { listCategories, listProducts, SortOption, SpiceLevel } from '@/lib/catalog';
+import { ShopProductCard } from '@/components/shop/ShopProductCard';
+import { ShopFilters } from '@/components/shop/ShopFilters';
 
 export const metadata: Metadata = {
-  title: 'Shop Premium Sev | Rasvat',
-  description: 'Browse our collection of authentic, premium quality Sev. Available in retail packs and bulk quantities.',
+  title: 'Shop Premium Sev & Namkeen | Rasvat Authentic Snacks',
+  description:
+    'Explore our signature collection of authentic Indori Sev, Ratlami Sev, Nylon Sev, and royal namkeen. Handcrafted in cold-pressed oil with pure stone-ground besan.',
 };
 
-export default function ShopPage() {
+interface ShopPageProps {
+  searchParams: Promise<{
+    category?: string;
+    sort?: string;
+    spice?: string;
+    q?: string;
+    page?: string;
+  }>;
+}
+
+export default async function ShopPage({ searchParams }: ShopPageProps) {
+  const resolvedParams = await searchParams;
+
+  const currentCategory = resolvedParams.category || 'all';
+  const currentSort = (resolvedParams.sort as SortOption) || 'popular';
+  const currentSpice = (resolvedParams.spice as SpiceLevel) || null;
+  const searchQuery = resolvedParams.q || null;
+  const currentPage = parseInt(resolvedParams.page || '1', 10) || 1;
+
+  const categories = listCategories();
+  const { products, total, totalPages, page } = listProducts(
+    {
+      category: currentCategory === 'all' ? null : currentCategory,
+      spice_level: currentSpice,
+      search: searchQuery,
+    },
+    currentSort,
+    currentPage,
+    12
+  );
+
   return (
     <PublicLayout>
-      {/* Page header */}
-      <div
-        className="relative overflow-hidden pt-12 pb-10"
+      {/* Header & Breadcrumb Hero Banner */}
+      <section
+        className="relative pt-8 pb-10 border-b border-border"
         style={{
           background: `
-            radial-gradient(ellipse at 80% 0%, rgb(212 160 23 / 0.1) 0%, transparent 50%),
-            var(--color-bg-surface)
+            radial-gradient(ellipse at 85% 10%, rgba(255, 206, 27, 0.12) 0%, transparent 55%),
+            radial-gradient(ellipse at 15% 90%, rgba(211, 47, 47, 0.05) 0%, transparent 45%),
+            var(--color-bg-white)
           `,
-          borderBottom: '1px solid var(--color-border)',
         }}
       >
-        <div className="container-site relative z-10">
-          <div className="section-label mb-3">Our Collection</div>
-          <h1
-            className="text-3xl md:text-4xl font-black mb-2"
-            style={{ fontFamily: 'var(--font-outfit)', letterSpacing: '-0.02em', color: 'var(--color-text)' }}
-          >
-            Shop Premium Sev
-          </h1>
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: '1rem' }}>
-            Discover our wide range of authentic, freshly packed Sev varieties.
-          </p>
-        </div>
-      </div>
-
-      <div style={{ background: 'var(--color-bg)' }} className="min-h-screen pt-8 pb-20">
         <div className="container-site">
-          <Suspense
-            fallback={
-              <div
-                className="h-96 flex items-center justify-center rounded-2xl"
-                style={{
-                  background: 'var(--color-bg-elevated)',
-                  border: '1px solid var(--color-border)',
-                }}
-              >
-                <p style={{ color: 'var(--color-text-muted)' }}>Loading products...</p>
+          {/* Breadcrumb Navigation */}
+          <nav aria-label="Breadcrumb" className="mb-4">
+            <ol className="flex items-center gap-2 text-xs font-semibold text-gray-500">
+              <li>
+                <Link href="/" className="hover:text-primary transition-colors">
+                  Home
+                </Link>
+              </li>
+              <li>
+                <ChevronRight size={12} className="text-gray-400" />
+              </li>
+              <li aria-current="page" className="text-ink font-bold">
+                Shop
+              </li>
+            </ol>
+          </nav>
+
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2.5 bg-primary-faint text-primary-dark">
+                <Sparkles size={13} />
+                Freshly Packed Snacks
               </div>
-            }
-          >
-            <ShopClient />
-          </Suspense>
+              <h1
+                className="text-3xl sm:text-4xl lg:text-5xl font-black text-ink tracking-tight mb-2"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
+                Shop Premium Sev
+              </h1>
+              <p className="text-sm sm:text-base text-gray-600 max-w-xl">
+                Authentic central Indian recipes, hand-pressed and slow-fried in pure cold-pressed oil with stone-ground gram flour.
+              </p>
+            </div>
+
+            {/* Results Pill */}
+            <div className="text-xs font-semibold text-gray-500 self-start md:self-end">
+              Showing <span className="font-bold text-ink">{products.length}</span> of{' '}
+              <span className="font-bold text-ink">{total}</span> authentic varieties
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Main Catalog Viewport */}
+      <section className="py-10 bg-bg min-h-[60vh]">
+        <div className="container-site">
+          {/* Category Chips & Mobile Controls */}
+          <Suspense fallback={null}>
+            <ShopFilters categories={categories} totalCount={total} />
+          </Suspense>
+
+          <div className="flex items-start gap-8">
+            {/* Desktop Sidebar is inside ShopFilters */}
+
+            {/* Product Grid Area */}
+            <main className="flex-1 min-w-0" id="main-content">
+              {products.length === 0 ? (
+                /* Empty State */
+                <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-2xl bg-white border border-border shadow-sm">
+                  <div className="w-16 h-16 rounded-full bg-primary-faint flex items-center justify-center text-primary mb-4">
+                    <PackageOpen size={32} />
+                  </div>
+                  <h3
+                    className="text-lg font-bold text-ink mb-1"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                  >
+                    No Sev varieties match your selection
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-500 max-w-sm mb-6">
+                    Try clearing or adjusting your category, spice level, or search filters to explore our full range.
+                  </p>
+                  <Link
+                    href="/shop"
+                    className="inline-flex items-center justify-center px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-primary-dark transition-colors"
+                  >
+                    Reset All Filters
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  {/* Grid 4 / 3 / 2 columns (Desktop >=1280px: 4 cols, Tablet >=768px: 3 cols, Mobile: 2 cols) */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
+                    {products.map((product) => (
+                      <ShopProductCard key={product.slug} product={product} />
+                    ))}
+                  </div>
+
+                  {/* Pagination / Page Controls if needed */}
+                  {totalPages > 1 && (
+                    <div className="mt-12 flex items-center justify-center gap-2">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                        const isCurrent = pageNum === page;
+                        const pageParams = new URLSearchParams(
+                          Object.entries(resolvedParams).reduce<Record<string, string>>((acc, [k, v]) => {
+                            if (typeof v === 'string') acc[k] = v;
+                            return acc;
+                          }, {})
+                        );
+                        pageParams.set('page', pageNum.toString());
+
+                        return (
+                          <Link
+                            key={pageNum}
+                            href={`/shop?${pageParams.toString()}`}
+                            className={`w-9 h-9 rounded-lg text-xs font-bold flex items-center justify-center transition-all ${
+                              isCurrent
+                                ? 'bg-primary text-white shadow-sm'
+                                : 'bg-white text-gray-700 border border-border hover:bg-gray-50'
+                            }`}
+                          >
+                            {pageNum}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+            </main>
+          </div>
+        </div>
+      </section>
     </PublicLayout>
   );
 }

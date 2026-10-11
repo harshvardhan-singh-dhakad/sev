@@ -43,3 +43,10 @@ next-env.d.ts
 # scratch and test results
 /test-results/
 /scratch/
+
+# sqlite local databases
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+data/*.sqlite*
+

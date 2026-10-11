@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#FFFDF5" />
+      <stop offset="70%" stop-color="#FBF7EC" />
+      <stop offset="100%" stop-color="#F1ECE0" />
+    </radialGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#78350F" flood-opacity="0.12" />
+    </filter>
+    <linearGradient id="strandGold1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+    <linearGradient id="strandGold2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+    <linearGradient id="bowlGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#F1F5F9" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="600" height="600" fill="url(#bgGlow)" />
+
+  <!-- Subtle Circular Dish/Bowl Rim -->
+  <ellipse cx="300" cy="320" rx="200" ry="110" fill="url(#bowlGrad)" filter="url(#shadow)" stroke="#E2E8F0" stroke-width="2" />
+  <ellipse cx="300" cy="315" rx="188" ry="98" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5" />
+
+  <!-- Sev Strands Crisp Mound Pattern -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Base Layer -->
+    <path d="M 220,310 Q 240,260 300,270 T 370,300" stroke="url(#strandGold2)" stroke-width="5" />
+    <path d="M 230,300 Q 280,240 330,280 T 380,310" stroke="url(#strandGold1)" stroke-width="4.5" />
+    <path d="M 210,315 Q 270,270 320,310 T 390,305" stroke="url(#strandGold2)" stroke-width="4" />
+    <path d="M 240,290 Q 290,230 350,265 T 370,320" stroke="url(#strandGold1)" stroke-width="5" />
+    <path d="M 250,320 Q 300,250 360,290 T 385,295" stroke="url(#strandGold2)" stroke-width="4" />
+
+    <!-- Mid Crisp Strands -->
+    <path d="M 235,285 Q 275,225 315,250 T 365,280" stroke="url(#strandGold1)" stroke-width="4.5" />
+    <path d="M 260,275 Q 310,215 340,255 T 375,305" stroke="url(#strandGold2)" stroke-width="5" />
+    <path d="M 225,305 Q 265,250 330,260 T 370,295" stroke="url(#strandGold1)" stroke-width="4" />
+    <path d="M 245,295 Q 285,235 345,275 T 360,315" stroke="url(#strandGold2)" stroke-width="4.5" />
+    <path d="M 270,280 Q 320,220 355,270 T 380,285" stroke="url(#strandGold1)" stroke-width="4" />
+
+    <!-- Foreground Fine Strands -->
+    <path d="M 255,270 Q 295,210 335,245 T 355,290" stroke="#FDE68A" stroke-width="3.5" />
+    <path d="M 265,265 Q 305,205 340,240 T 365,275" stroke="url(#strandGold2)" stroke-width="4" />
+    <path d="M 240,280 Q 290,225 330,250 T 350,300" stroke="#FBBF24" stroke-width="3.5" />
+    <path d="M 280,260 Q 315,215 345,255 T 360,295" stroke="#F59E0B" stroke-width="4" />
+  </g>
+
+  <!-- Authentic Rasvat Brand Badge Stamp -->
+  <g transform="translate(300, 480)" text-anchor="middle">
+    <rect x="-90" y="-18" width="180" height="36" rx="18" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5" filter="url(#shadow)" />
+    <circle cx="-65" cy="0" r="5" fill="#D32F2F" />
+    <text x="5" y="5" font-family="'Outfit', sans-serif" font-size="14" font-weight="700" fill="#111827" letter-spacing="1">
+      RASVAT AUTHENTIC
+    </text>
+  </g>
+</svg>
