@@ -1,0 +1,6 @@
+# Cloudflare Workers / Wrangler local secrets (.dev.vars)
+# These should NEVER be committed to Git.
+
+RAZORPAY_KEY_ID=rzp_test_YourTestKeyIdHere
+RAZORPAY_KEY_SECRET=YourTestKeySecretHere
+RAZORPAY_WEBHOOK_SECRET=YourWebhookSecretHere
