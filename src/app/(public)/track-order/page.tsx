@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import PublicLayout from '@/components/layout/PublicLayout';
-import TrackOrderClient from '@/components/track-order/TrackOrderClient';
+import TrackOrderClient from './TrackOrderClient';
 
 export const metadata: Metadata = {
   title: 'Track Your Order | Rasvat Authentic Snacks',

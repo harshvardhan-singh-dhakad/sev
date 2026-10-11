@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import PublicLayout from '@/components/layout/PublicLayout';
-import CheckoutPageContent from '@/components/checkout/CheckoutPageContent';
+import CheckoutPageContent from './CheckoutPageContent';
 
 export const metadata: Metadata = {
   title: 'Secure Checkout | Rasvat Authentic Snacks',

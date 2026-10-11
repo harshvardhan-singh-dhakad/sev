@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createPendingOrder } from '@/lib/orders';
+import { createPendingOrder, attachRazorpayOrderId } from '@/lib/orders';
+import { createRazorpayOrder } from '@/lib/razorpay';
 
 const INDIAN_PHONE_REGEX = /^[6-9]\d{9}$/;
 const PINCODE_REGEX = /^[1-9][0-9]{5}$/;
@@ -111,6 +112,32 @@ export async function POST(request: NextRequest) {
       notes: notes ? String(notes).trim() : null,
     });
 
+    // Create corresponding Razorpay Order
+    let razorpayData = null;
+    try {
+      const razorpayOrder = await createRazorpayOrder({
+        amount: order.total,
+        currency: 'INR',
+        receipt: order.order_number,
+        notes: {
+          order_id: order.id,
+          order_number: order.order_number,
+          public_token: order.public_token,
+        },
+      });
+
+      await attachRazorpayOrderId(order.id, razorpayOrder.id);
+
+      razorpayData = {
+        keyId: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
+        orderId: razorpayOrder.id,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+      };
+    } catch (rzpErr) {
+      console.error('Warning: Razorpay order initialization error:', rzpErr);
+    }
+
     return NextResponse.json(
       {
         success: true,
@@ -124,6 +151,7 @@ export async function POST(request: NextRequest) {
           total: order.total,
           itemsCount: createdItems.length,
         },
+        razorpay: razorpayData,
       },
       { status: 201 }
     );

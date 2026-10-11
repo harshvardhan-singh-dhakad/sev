@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import PublicLayout from '@/components/layout/PublicLayout';
-import CartPageContent from '@/components/cart/CartPageContent';
+import CartPageContent from './CartPageContent';
 
 export const metadata: Metadata = {
   title: 'Shopping Cart | Rasvat Authentic Snacks',

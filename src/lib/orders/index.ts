@@ -238,7 +238,7 @@ export async function createPendingOrder(input: CreatePendingOrderInput): Promis
     status: 'pending_payment',
     customer_name: input.customerName.trim(),
     customer_phone: normalizePhoneNumber(input.customerPhone),
-    customer_email: input.customerEmail.trim().toLowerCase(),
+    customer_email: input.customerEmail ? input.customerEmail.trim().toLowerCase() : '',
     shipping_line1: input.shippingAddress.line1.trim(),
     shipping_line2: input.shippingAddress.line2?.trim() || null,
     shipping_landmark: input.shippingAddress.landmark?.trim() || null,
@@ -323,6 +323,20 @@ export async function createPendingOrder(input: CreatePendingOrderInput): Promis
   await orderDbBatch(statements);
   return { order: orderRecord, items: itemSnapshots };
 }
+
+/**
+ * Attaches a Razorpay Order ID to an existing pending order.
+ */
+export async function attachRazorpayOrderId(
+  orderId: string,
+  razorpayOrderId: string
+): Promise<void> {
+  await orderDbExecute(
+    `UPDATE orders SET razorpay_order_id = ?, updated_at = ? WHERE id = ?`,
+    [razorpayOrderId, new Date().toISOString(), orderId]
+  );
+}
+
 
 /**
  * 2. markOrderPaid
@@ -743,6 +757,13 @@ export async function getOrderByToken(publicToken: string): Promise<PublicOrderD
     created_at: order.created_at,
     updated_at: order.updated_at,
   };
+}
+
+/**
+ * Retrieves full order record by internal primary key ID.
+ */
+export async function getOrderById(orderId: string): Promise<OrderRecord | null> {
+  return orderDbQueryFirst<OrderRecord>(`SELECT * FROM orders WHERE id = ?`, [orderId]);
 }
 
 /**

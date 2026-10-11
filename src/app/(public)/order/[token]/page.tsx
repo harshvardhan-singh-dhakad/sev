@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import PublicLayout from '@/components/layout/PublicLayout';
 import { getOrderByToken } from '@/lib/orders';
-import OrderDetailsClient from '@/components/order/OrderDetailsClient';
+import OrderDetailsClient from './OrderDetailsClient';
 
 interface OrderPageProps {
   params: Promise<{
