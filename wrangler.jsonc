@@ -1,5 +1,4 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "rasvat",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-03-01",
