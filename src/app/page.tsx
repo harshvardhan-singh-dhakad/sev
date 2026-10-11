@@ -16,8 +16,6 @@ export const metadata: Metadata = {
     'Shop premium quality Sev online. Indori Sev, Ratlami Sev, Nylon Sev and more. Bulk orders from 10 KG+. Request free samples. Freshly packed & delivered pan India.',
 };
 
-export const instant = false;
-
 export default async function HomePage() {
   return (
     <PublicLayout>

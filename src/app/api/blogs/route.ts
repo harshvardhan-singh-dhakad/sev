@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
 
     let query = 'SELECT * FROM blogs';
-    const params: unknown[] = [];
+    const params: (string | number | boolean | null)[] = [];
 
     if (status) {
       query += ' WHERE status = ?';

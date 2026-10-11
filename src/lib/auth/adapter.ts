@@ -10,8 +10,7 @@
  * 3. The FirebaseAuthAdapter verifies ID tokens from Authorization: Bearer <token> or session cookie
  */
 
-import { AdminUser } from './permissions';
-import { validateSessionToken } from './session';
+import { AdminUser, validateSessionToken } from './session';
 
 export interface AuthSessionResult {
   user: AdminUser | null;

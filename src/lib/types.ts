@@ -70,6 +70,15 @@ export interface ProductCategory {
 // ---- Planned Final Schema Types (Paise & Grams) ----
 export type SpiceLevel = 'mild' | 'medium' | 'hot';
 
+export interface CatalogCategory {
+  slug: string;
+  name: string;
+  description: string;
+  display_order: number;
+  status: 'active' | 'inactive';
+  image?: string;
+}
+
 export interface CatalogImage {
   src: string;
   alt: string;

@@ -40,7 +40,7 @@ async function getCategories(): Promise<ProductCategory[]> {
 
 const CATEGORY_ICONS: Record<
   string,
-  React.ComponentType<{ size?: number; className?: string; strokeWidth?: number; 'aria-hidden'?: boolean | 'true' | 'false' }>
+  React.ComponentType<{ size?: number; className?: string; strokeWidth?: number; style?: React.CSSProperties; 'aria-hidden'?: boolean | 'true' | 'false' }>
 > = {
   'indori-sev': Wheat,
   'ratlami-sev': Flame,
