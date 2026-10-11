@@ -29,7 +29,7 @@ const DEMO_PRODUCTS: Product[] = [
       { id: 'v2', productId: 'p1', name: '500g', weight: '500g', weightGrams: 500, sku: 'IND-500', price: 140, compareAtPrice: 170, stock: 40, lowStockThreshold: 8, status: 'active' },
       { id: 'v3', productId: 'p1', name: '1 KG', weight: '1 KG', weightGrams: 1000, sku: 'IND-1KG', price: 270, stock: 30, lowStockThreshold: 5, status: 'active' },
     ],
-    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+    createdAt: '2026-03-01T00:00:00.000Z', updatedAt: '2026-03-01T00:00:00.000Z',
   },
   {
     id: 'p2', name: 'Ratlami Special Sev', slug: 'ratlami-special-sev', categoryId: '2',
@@ -41,7 +41,7 @@ const DEMO_PRODUCTS: Product[] = [
       { id: 'v4', productId: 'p2', name: '250g', weight: '250g', weightGrams: 250, sku: 'RAT-250', price: 80, compareAtPrice: 95, stock: 45, lowStockThreshold: 10, status: 'active' },
       { id: 'v5', productId: 'p2', name: '500g', weight: '500g', weightGrams: 500, sku: 'RAT-500', price: 150, stock: 35, lowStockThreshold: 8, status: 'active' },
     ],
-    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+    createdAt: '2026-03-01T00:00:00.000Z', updatedAt: '2026-03-01T00:00:00.000Z',
   },
   {
     id: 'p3', name: 'Thin Nylon Sev', slug: 'thin-nylon-sev', categoryId: '3',
@@ -53,7 +53,7 @@ const DEMO_PRODUCTS: Product[] = [
       { id: 'v6', productId: 'p3', name: '200g', weight: '200g', weightGrams: 200, sku: 'NYL-200', price: 65, stock: 60, lowStockThreshold: 15, status: 'active' },
       { id: 'v7', productId: 'p3', name: '500g', weight: '500g', weightGrams: 500, sku: 'NYL-500', price: 150, compareAtPrice: 175, stock: 50, lowStockThreshold: 10, status: 'active' },
     ],
-    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+    createdAt: '2026-03-01T00:00:00.000Z', updatedAt: '2026-03-01T00:00:00.000Z',
   },
   {
     id: 'p4', name: 'Garlic Tikha Sev', slug: 'garlic-tikha-sev', categoryId: '5',
@@ -65,7 +65,7 @@ const DEMO_PRODUCTS: Product[] = [
       { id: 'v8', productId: 'p4', name: '250g', weight: '250g', weightGrams: 250, sku: 'GTK-250', price: 85, stock: 40, lowStockThreshold: 8, status: 'active' },
       { id: 'v9', productId: 'p4', name: '500g', weight: '500g', weightGrams: 500, sku: 'GTK-500', price: 160, compareAtPrice: 185, stock: 25, lowStockThreshold: 5, status: 'active' },
     ],
-    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+    createdAt: '2026-03-01T00:00:00.000Z', updatedAt: '2026-03-01T00:00:00.000Z',
   },
 ];
 

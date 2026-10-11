@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    let conditions: string[] = [];
-    let params: (string | number | boolean | null)[] = [];
+    const conditions: string[] = [];
+    const params: (string | number | boolean | null)[] = [];
 
     if (status) { conditions.push('p.status = ?'); params.push(status); }
     if (categoryId) { conditions.push('p.category_id = ?'); params.push(categoryId); }

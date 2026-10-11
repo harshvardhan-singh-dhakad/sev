@@ -18,7 +18,7 @@ const DEMO_REVIEWS: Review[] = [
 
     status: 'approved', featured: true,
 
-    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+    createdAt: '2026-03-01T00:00:00.000Z', updatedAt: '2026-03-01T00:00:00.000Z',
 
   },
 
@@ -34,7 +34,7 @@ const DEMO_REVIEWS: Review[] = [
 
     status: 'approved', featured: true,
 
-    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+    createdAt: '2026-03-01T00:00:00.000Z', updatedAt: '2026-03-01T00:00:00.000Z',
 
   },
 
@@ -50,7 +50,7 @@ const DEMO_REVIEWS: Review[] = [
 
     status: 'approved', featured: false,
 
-    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+    createdAt: '2026-03-01T00:00:00.000Z', updatedAt: '2026-03-01T00:00:00.000Z',
 
   },
 
