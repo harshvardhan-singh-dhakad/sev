@@ -1,10 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const filePath = path.join(__dirname, '..', 'node_modules', '@opennextjs', 'aws', 'dist', 'build', 'copyTracedFiles.js');
-
-if (fs.existsSync(filePath)) {
-  let content = fs.readFileSync(filePath, 'utf8');
+// 1. Patch Windows symlink in @opennextjs/aws
+const copyTracedFilesPath = path.join(__dirname, '..', 'node_modules', '@opennextjs', 'aws', 'dist', 'build', 'copyTracedFiles.js');
+if (fs.existsSync(copyTracedFilesPath)) {
+  let content = fs.readFileSync(copyTracedFilesPath, 'utf8');
   const targetCode = `        if (symlink) {
             try {
                 symlinkSync(symlink, to);
@@ -40,11 +40,29 @@ if (fs.existsSync(filePath)) {
 
   if (content.includes(targetCode)) {
     content = content.replace(targetCode, replacementCode);
-    fs.writeFileSync(filePath, content, 'utf8');
+    fs.writeFileSync(copyTracedFilesPath, content, 'utf8');
     console.log('[patch-opennext] Successfully patched copyTracedFiles.js for Windows support.');
   } else {
-    console.log('[patch-opennext] copyTracedFiles.js is already patched or target pattern not found.');
+    console.log('[patch-opennext] copyTracedFiles.js is already patched.');
   }
-} else {
-  console.log('[patch-opennext] @opennextjs/aws not found, skipping patch.');
+}
+
+// 2. Patch load-manifest in @opennextjs/cloudflare for preview-props.json (Next 16 compatibility)
+const loadManifestPath = path.join(__dirname, '..', 'node_modules', '@opennextjs', 'cloudflare', 'dist', 'cli', 'build', 'patches', 'plugins', 'load-manifest.js');
+if (fs.existsSync(loadManifestPath)) {
+  let content = fs.readFileSync(loadManifestPath, 'utf8');
+  if (content.includes('**/{*-manifest,required-server-files,prefetch-hints}.json')) {
+    content = content.replace(
+      '**/{*-manifest,required-server-files,prefetch-hints}.json',
+      '**/{*-manifest,required-server-files,prefetch-hints,preview-props}.json'
+    );
+  }
+  if (!content.includes('p.endsWith("preview-props")')) {
+    content = content.replace(
+      'p.endsWith("fallback-build-manifest") ||',
+      'p.endsWith("fallback-build-manifest") ||\n        p.endsWith("preview-props") ||'
+    );
+  }
+  fs.writeFileSync(loadManifestPath, content, 'utf8');
+  console.log('[patch-opennext] Successfully patched load-manifest.js for preview-props support.');
 }

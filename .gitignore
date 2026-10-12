@@ -38,7 +38,8 @@ yarn-error.log*
 !.dev.vars.example
 
 
-# vercel
+# cloudflare & vercel
+.wrangler
 .vercel
 
 # typescript
