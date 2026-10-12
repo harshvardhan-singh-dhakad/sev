@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { destroySession, SESSION_COOKIE_NAME } from '@/lib/auth/session';
 

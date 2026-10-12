@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
-import { ShoppingCart, Flame, Wheat, Sparkles } from 'lucide-react';
+import { ShoppingCart, Flame } from 'lucide-react';
 import { Product, Variant, getDefaultVariant } from '@/lib/catalog';
 import { formatINR, perKgPrice } from '@/lib/pricing';
 import { useCartStore } from '@/lib/store';
@@ -16,7 +16,7 @@ interface ShopProductCardProps {
 
 export function ShopProductCard({ product, className = '' }: ShopProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const { addItem, openCart } = useCartStore();
+  const { addItem } = useCartStore();
 
   const defaultVariant: Variant = getDefaultVariant(product);
   const primaryImg = product.images.find((img) => img.is_primary) || product.images[0];

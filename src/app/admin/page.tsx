@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   Package,
   Layers,
   Briefcase,
-  Gift,
   Settings,
   History,
   ArrowRight,
@@ -17,7 +16,7 @@ import {
 import { formatINR } from '@/lib/pricing';
 
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState({
+  const [stats] = useState({
     productsCount: 8,
     categoriesCount: 8,
     minCartValuePaise: 19900,

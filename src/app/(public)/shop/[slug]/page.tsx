@@ -5,7 +5,6 @@ import {
   getProductBySlug,
   getRelatedProducts,
   getStoreSettings,
-  getDefaultVariant,
 } from '@/lib/catalog';
 import { ProductDetailClient } from '@/components/pdp/ProductDetailClient';
 
@@ -71,7 +70,6 @@ export default async function ProductDetailPage({
 
   // Primary image
   const primaryImage = product.images.find((img) => img.is_primary) || product.images[0];
-  const defaultVar = getDefaultVariant(product);
 
   // Product JSON-LD structured data with offers per active variant
   const productJsonLd = {

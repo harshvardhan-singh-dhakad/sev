@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { UploadCloud, Trash2, Image as ImageIcon, Check, AlertCircle, RefreshCw } from 'lucide-react';
+import { UploadCloud, Trash2, Image as ImageIcon, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface MediaItem {

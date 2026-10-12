@@ -10,11 +10,9 @@ import {
   XCircle,
   ArrowRight,
   Package,
-  Layers,
   Leaf,
   Clock,
   MapPin,
-  Smile,
   Wheat,
 } from 'lucide-react';
 import PublicLayout from '@/components/layout/PublicLayout';

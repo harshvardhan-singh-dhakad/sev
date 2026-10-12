@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getDb } from '@/lib/db';
 import {
-  hashPassword,
   verifyPassword,
   checkLoginRateLimit,
   recordLoginAttempt,

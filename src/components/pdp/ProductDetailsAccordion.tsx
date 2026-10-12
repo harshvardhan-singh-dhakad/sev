@@ -5,11 +5,7 @@ import Link from 'next/link';
 import {
   ChevronDown,
   Sparkles,
-  ShieldCheck,
-  Truck,
-  HeartHandshake,
   UtensilsCrossed,
-  Info,
 } from 'lucide-react';
 import { Product, Variant, Settings } from '@/lib/catalog';
 import { formatINR } from '@/lib/pricing';

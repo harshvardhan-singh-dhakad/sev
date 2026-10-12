@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { SlidersHorizontal, X, Check, Flame, RotateCcw } from 'lucide-react';
-import { Category, SpiceLevel } from '@/lib/catalog';
+import { Category } from '@/lib/catalog';
 
 interface ShopFiltersProps {
   categories: Category[];

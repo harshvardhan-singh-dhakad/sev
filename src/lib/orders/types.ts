@@ -162,12 +162,15 @@ export interface MarkPaymentFailedInput {
 }
 
 export interface RecordRefundInput {
-  orderId: string;
+  orderId?: string;
+  razorpayOrderId?: string;
   paymentId?: string | null;
+  razorpayPaymentId?: string | null;
   razorpayRefundId: string;
   amount: number; // in integer paise
   reason?: string | null;
   createdBy?: string;
+  actor?: 'webhook' | 'system' | 'admin';
 }
 
 export interface PublicOrderDetails {

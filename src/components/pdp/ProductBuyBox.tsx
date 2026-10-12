@@ -11,7 +11,6 @@ import {
   Zap,
   ShieldCheck,
   Truck,
-  RotateCcw,
   Sparkles,
   ArrowRight,
   Info,

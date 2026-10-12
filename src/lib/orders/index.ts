@@ -19,7 +19,6 @@ import {
   OrderListResult,
   OrderRecord,
   OrderTrackingInfo,
-  PaymentRecord,
   PublicOrderDetails,
   RecordRefundInput,
   RefundRecord,
@@ -638,9 +637,24 @@ export async function expireOrder(orderId: string): Promise<boolean> {
  * Records a full or partial refund for an order.
  */
 export async function recordRefund(params: RecordRefundInput): Promise<RefundRecord> {
-  const order = await orderDbQueryFirst<OrderRecord>(`SELECT * FROM orders WHERE id = ?`, [params.orderId]);
+  let order: OrderRecord | null = null;
+  if (params.orderId) {
+    order = await orderDbQueryFirst<OrderRecord>(`SELECT * FROM orders WHERE id = ?`, [params.orderId]);
+  } else if (params.razorpayOrderId) {
+    order = await orderDbQueryFirst<OrderRecord>(`SELECT * FROM orders WHERE razorpay_order_id = ?`, [params.razorpayOrderId]);
+  }
+
   if (!order) {
-    throw new Error(`Order not found for refund: ${params.orderId}`);
+    throw new Error(`Order not found for refund: ${params.orderId || params.razorpayOrderId}`);
+  }
+
+  let paymentId = params.paymentId || null;
+  if (!paymentId && order) {
+    const payment = await orderDbQueryFirst<{ id: string }>(
+      `SELECT id FROM payments WHERE order_id = ? ORDER BY created_at DESC LIMIT 1`,
+      [order.id]
+    );
+    if (payment) paymentId = payment.id;
   }
 
   const now = new Date().toISOString();
@@ -649,12 +663,12 @@ export async function recordRefund(params: RecordRefundInput): Promise<RefundRec
   const refundRecord: RefundRecord = {
     id: refundId,
     order_id: order.id,
-    payment_id: params.paymentId || null,
+    payment_id: paymentId,
     razorpay_refund_id: params.razorpayRefundId,
     amount: params.amount,
     status: 'processed',
     reason: params.reason || 'Requested refund',
-    created_by: params.createdBy || 'system',
+    created_by: params.createdBy || params.actor || 'system',
     created_at: now,
   };
 
@@ -965,3 +979,5 @@ export async function listOrders(filters: OrderListFilters = {}): Promise<OrderL
     totalPages: Math.ceil(total / limit) || 1,
   };
 }
+
+export * from './reconciliation';

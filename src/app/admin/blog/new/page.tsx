@@ -25,7 +25,7 @@ export default function NewBlogPostPage() {
       const result = await uploadImageToR2(file, 'blog');
       setFeaturedImage(result.url);
       toast.success('Image uploaded successfully');
-    } catch (err) {
+    } catch {
       toast.error('Failed to upload image');
     } finally {
       setUploadingImage(false);
@@ -60,7 +60,7 @@ export default function NewBlogPostPage() {
         const err = await res.json();
         toast.error(err.error || 'Failed to create blog post');
       }
-    } catch (err) {
+    } catch {
       toast.error('Network error. Please try again.');
     } finally {
       setLoading(false);
