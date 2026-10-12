@@ -47,7 +47,7 @@ if (fs.existsSync(copyTracedFilesPath)) {
   }
 }
 
-// 2. Patch load-manifest in @opennextjs/cloudflare for preview-props.json (Next 16 compatibility)
+// 2. Patch load-manifest in @opennextjs/cloudflare for preview-props.json & safe fallback
 const loadManifestPath = path.join(__dirname, '..', 'node_modules', '@opennextjs', 'cloudflare', 'dist', 'cli', 'build', 'patches', 'plugins', 'load-manifest.js');
 if (fs.existsSync(loadManifestPath)) {
   let content = fs.readFileSync(loadManifestPath, 'utf8');
@@ -63,6 +63,12 @@ if (fs.existsSync(loadManifestPath)) {
       'p.endsWith("fallback-build-manifest") ||\n        p.endsWith("preview-props") ||'
     );
   }
+  // Prevent fatal worker exception on unexpected manifest calls
+  const throwCall = 'throw new Error(`Unexpected loadManifest(${$PATH}) call!`);';
+  const safeFallback = 'console.warn(`[OpenNext] Missing manifest: ${$PATH}, fallback to empty object`); return {};';
+  if (content.includes(throwCall)) {
+    content = content.replace(throwCall, safeFallback);
+  }
   fs.writeFileSync(loadManifestPath, content, 'utf8');
-  console.log('[patch-opennext] Successfully patched load-manifest.js for preview-props support.');
+  console.log('[patch-opennext] Successfully patched load-manifest.js for safe manifest handling.');
 }

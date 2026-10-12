@@ -6,7 +6,7 @@
     "nodejs_compat"
   ],
   "build": {
-    "command": "npx opennextjs-cloudflare build"
+    "command": "node scripts/patch-opennext.js && npx opennextjs-cloudflare build"
   },
   "assets": {
     "directory": ".open-next/assets",
