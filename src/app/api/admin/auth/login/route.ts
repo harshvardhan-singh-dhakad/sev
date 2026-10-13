@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { getDb } from '@/lib/db';
+import { execute, queryFirst } from '@/lib/db';
 import {
   verifyPassword,
   checkLoginRateLimit,
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     const rateLimitKey = `${ip}:${cleanEmail}`;
 
     // 1. Check Rate Limit
-    const rateLimit = checkLoginRateLimit(rateLimitKey);
+    const rateLimit = await checkLoginRateLimit(rateLimitKey);
     if (rateLimit.isLocked) {
       return NextResponse.json(
         {
@@ -35,8 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Query User
-    const db = getDb();
-    const user = db.prepare('SELECT * FROM users WHERE email = ? AND is_active = 1').get(cleanEmail) as {
+    const user = await queryFirst<{
       id: string;
       email: string;
       password_hash: string;
@@ -44,28 +43,28 @@ export async function POST(request: NextRequest) {
       name: string;
       role: string;
       totp_enabled: number;
-    } | undefined;
+    }>('SELECT * FROM users WHERE email = ? AND is_active = 1', [cleanEmail]);
 
     if (!user) {
-      recordLoginAttempt(rateLimitKey, false);
+      await recordLoginAttempt(rateLimitKey, false);
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
     // 3. Verify Password
-    const isValid = verifyPassword(password, user.password_hash, user.salt);
+    const isValid = await verifyPassword(password, user.password_hash, user.salt);
     if (!isValid) {
-      recordLoginAttempt(rateLimitKey, false);
+      await recordLoginAttempt(rateLimitKey, false);
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
     // 4. Success -> Reset Rate Limit & Update Login Timestamp
-    recordLoginAttempt(rateLimitKey, true);
+    await recordLoginAttempt(rateLimitKey, true);
     const now = new Date().toISOString();
-    db.prepare('UPDATE users SET last_login_at = ? WHERE id = ?').run(now, user.id);
+    await execute('UPDATE users SET last_login_at = ? WHERE id = ?', [now, user.id]);
 
     // 5. Create Session
     const userAgent = request.headers.get('user-agent') || undefined;
-    const sessionToken = createSession(user.id, userAgent, ip);
+    const sessionToken = await createSession(user.id, userAgent, ip);
 
     // 6. Set Secure HttpOnly Cookie
     const cookieStore = await cookies();
@@ -78,7 +77,7 @@ export async function POST(request: NextRequest) {
     });
 
     // 7. Audit Log
-    logAuditEvent({
+    await logAuditEvent({
       userId: user.id,
       userName: user.name,
       userRole: user.role,

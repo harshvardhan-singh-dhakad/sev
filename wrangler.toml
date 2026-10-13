@@ -1,0 +1,23 @@
+name = "sev"
+main = ".open-next/worker.js"
+compatibility_date = "2026-10-13"
+compatibility_flags = ["nodejs_compat"]
+
+[build]
+command = "node scripts/patch-opennext.js && npx opennextjs-cloudflare build"
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "rasvat-prod-db"
+database_id = "18184346-4f3a-481a-9474-5aff3f6be39b"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "rasvat-media"
+
+[observability]
+enabled = true

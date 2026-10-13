@@ -1,6 +1,5 @@
-import crypto from 'node:crypto';
 import { cookies } from 'next/headers';
-import { getDb } from '@/lib/db';
+import { execute, queryFirst } from '@/lib/db';
 import { Role } from './permissions';
 
 export interface AdminUser {
@@ -15,118 +14,151 @@ export interface AdminUser {
 }
 
 const SESSION_COOKIE_NAME = 'rasvat_admin_session';
-const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_LOGIN_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000;
+const encoder = new TextEncoder();
 
-export function hashPassword(password: string, salt?: string): { hash: string; salt: string } {
-  const finalSalt = salt || crypto.randomBytes(16).toString('hex');
-  const hash = crypto.pbkdf2Sync(password, finalSalt, 100000, 64, 'sha512').toString('hex');
-  return { hash, salt: finalSalt };
+function randomHex(bytesLength: number): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(bytesLength));
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-export function verifyPassword(password: string, storedHash: string, storedSalt: string): boolean {
-  const { hash } = hashPassword(password, storedSalt);
-  return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(storedHash, 'hex'));
+function toHex(bytes: ArrayBuffer): string {
+  return Array.from(new Uint8Array(bytes), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-export function checkLoginRateLimit(identifier: string): { isLocked: boolean; lockTimeRemainingMinutes?: number } {
-  const db = getDb();
-  const row = db.prepare('SELECT attempts, locked_until FROM login_attempts WHERE identifier = ?').get(identifier) as {
-    attempts: number;
-    locked_until?: string;
-  } | undefined;
+async function sha256(value: string): Promise<string> {
+  return toHex(await crypto.subtle.digest('SHA-256', encoder.encode(value)));
+}
+
+function constantTimeEqual(left: string, right: string): boolean {
+  if (left.length !== right.length) return false;
+  let difference = 0;
+  for (let index = 0; index < left.length; index += 1) {
+    difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
+  }
+  return difference === 0;
+}
+
+/** Web Crypto equivalent of Node's PBKDF2-SHA512; safe in a Worker. */
+export async function hashPassword(password: string, salt?: string): Promise<{ hash: string; salt: string }> {
+  const finalSalt = salt || randomHex(16);
+  const passwordKey = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits']
+  );
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: encoder.encode(finalSalt),
+      iterations: 100000,
+      hash: 'SHA-512',
+    },
+    passwordKey,
+    512
+  );
+  return { hash: toHex(bits), salt: finalSalt };
+}
+
+export async function verifyPassword(password: string, storedHash: string, storedSalt: string): Promise<boolean> {
+  const { hash } = await hashPassword(password, storedSalt);
+  return constantTimeEqual(hash, storedHash);
+}
+
+export async function checkLoginRateLimit(
+  identifier: string
+): Promise<{ isLocked: boolean; lockTimeRemainingMinutes?: number }> {
+  const row = await queryFirst<{ attempts: number; locked_until: string | null }>(
+    'SELECT attempts, locked_until FROM login_attempts WHERE identifier = ?',
+    [identifier]
+  );
 
   if (!row) return { isLocked: false };
-
   if (row.locked_until) {
     const lockedUntil = new Date(row.locked_until).getTime();
-    const now = Date.now();
-    if (now < lockedUntil) {
-      const remainingMinutes = Math.ceil((lockedUntil - now) / 60000);
-      return { isLocked: true, lockTimeRemainingMinutes: remainingMinutes };
-    } else {
-      // Lock expired, reset
-      db.prepare('DELETE FROM login_attempts WHERE identifier = ?').run(identifier);
-      return { isLocked: false };
+    if (Date.now() < lockedUntil) {
+      return { isLocked: true, lockTimeRemainingMinutes: Math.ceil((lockedUntil - Date.now()) / 60000) };
     }
+    await execute('DELETE FROM login_attempts WHERE identifier = ?', [identifier]);
   }
-
   return { isLocked: false };
 }
 
-export function recordLoginAttempt(identifier: string, success: boolean): void {
-  const db = getDb();
+export async function recordLoginAttempt(identifier: string, success: boolean): Promise<void> {
   if (success) {
-    db.prepare('DELETE FROM login_attempts WHERE identifier = ?').run(identifier);
+    await execute('DELETE FROM login_attempts WHERE identifier = ?', [identifier]);
     return;
   }
 
+  const row = await queryFirst<{ attempts: number }>(
+    'SELECT attempts FROM login_attempts WHERE identifier = ?',
+    [identifier]
+  );
   const now = new Date().toISOString();
-  const row = db.prepare('SELECT attempts FROM login_attempts WHERE identifier = ?').get(identifier) as {
-    attempts: number;
-  } | undefined;
 
   if (!row) {
-    db.prepare('INSERT INTO login_attempts (id, identifier, attempts, last_attempt_at) VALUES (?, ?, ?, ?)').run(
-      crypto.randomUUID(),
-      identifier,
-      1,
-      now
+    await execute(
+      'INSERT INTO login_attempts (id, identifier, attempts, last_attempt_at) VALUES (?, ?, ?, ?)',
+      [crypto.randomUUID(), identifier, 1, now]
     );
-  } else {
-    const newAttempts = row.attempts + 1;
-    let lockedUntil: string | null = null;
-    if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
-      lockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MS).toISOString();
-    }
-    db.prepare(
-      'UPDATE login_attempts SET attempts = ?, locked_until = ?, last_attempt_at = ? WHERE identifier = ?'
-    ).run(newAttempts, lockedUntil, now, identifier);
+    return;
   }
+
+  const attempts = row.attempts + 1;
+  const lockedUntil = attempts >= MAX_LOGIN_ATTEMPTS
+    ? new Date(Date.now() + LOCKOUT_DURATION_MS).toISOString()
+    : null;
+  await execute(
+    'UPDATE login_attempts SET attempts = ?, locked_until = ?, last_attempt_at = ? WHERE identifier = ?',
+    [attempts, lockedUntil, now, identifier]
+  );
 }
 
 export function createSessionToken(): string {
-  return crypto.randomBytes(32).toString('hex');
+  return randomHex(32);
 }
 
-export function hashToken(token: string): string {
-  return crypto.createHash('sha256').update(token).digest('hex');
+export async function hashToken(token: string): Promise<string> {
+  return sha256(token);
 }
 
-export function createSession(userId: string, userAgent?: string, ipAddress?: string): string {
-  const db = getDb();
+export async function createSession(userId: string, userAgent?: string, ipAddress?: string): Promise<string> {
   const token = createSessionToken();
-  const tokenHash = hashToken(token);
-  const id = crypto.randomUUID();
-  const expiresAt = new Date(Date.now() + SESSION_DURATION_MS).toISOString();
-  const createdAt = new Date().toISOString();
-
-  db.prepare(`
-    INSERT INTO sessions (id, user_id, token_hash, expires_at, user_agent, ip_address, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(id, userId, tokenHash, expiresAt, userAgent || null, ipAddress || null, createdAt);
-
+  const now = new Date();
+  await execute(
+    `INSERT INTO sessions (id, user_id, token_hash, expires_at, user_agent, ip_address, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      crypto.randomUUID(),
+      userId,
+      await hashToken(token),
+      new Date(now.getTime() + SESSION_DURATION_MS).toISOString(),
+      userAgent || null,
+      ipAddress || null,
+      now.toISOString(),
+    ]
+  );
   return token;
 }
 
-export function validateSessionToken(token: string): AdminUser | null {
+export async function validateSessionToken(token: string): Promise<AdminUser | null> {
   if (!token) return null;
-  const db = getDb();
-  const tokenHash = hashToken(token);
 
-  const row = db.prepare(`
-    SELECT s.id as session_id, s.expires_at, u.id, u.email, u.name, u.role, u.totp_enabled, u.is_active, u.created_at
-    FROM sessions s
-    JOIN users u ON s.user_id = u.id
-    WHERE s.token_hash = ? AND u.is_active = 1
-  `).get(tokenHash) as (AdminUser & { session_id: string; expires_at: string }) | undefined;
+  const row = await queryFirst<AdminUser & { session_id: string; expires_at: string }>(
+    `SELECT s.id as session_id, s.expires_at, u.id, u.email, u.name, u.role,
+            u.totp_enabled, u.is_active, u.created_at
+       FROM sessions s JOIN users u ON s.user_id = u.id
+      WHERE s.token_hash = ? AND u.is_active = 1`,
+    [await hashToken(token)]
+  );
 
   if (!row) return null;
-
-  // Check expiration
   if (new Date(row.expires_at).getTime() < Date.now()) {
-    db.prepare('DELETE FROM sessions WHERE id = ?').run(row.session_id);
+    await execute('DELETE FROM sessions WHERE id = ?', [row.session_id]);
     return null;
   }
 
@@ -141,20 +173,13 @@ export function validateSessionToken(token: string): AdminUser | null {
   };
 }
 
-export function destroySession(token: string): void {
-  const db = getDb();
-  const tokenHash = hashToken(token);
-  db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(tokenHash);
+export async function destroySession(token: string): Promise<void> {
+  if (token) await execute('DELETE FROM sessions WHERE token_hash = ?', [await hashToken(token)]);
 }
 
-/**
- * Server-side helper to read the current authenticated admin user from Next.js request cookies.
- */
 export async function getAuthenticatedAdmin(): Promise<AdminUser | null> {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
-  if (!sessionCookie?.value) return null;
-  return validateSessionToken(sessionCookie.value);
+  const sessionCookie = (await cookies()).get(SESSION_COOKIE_NAME);
+  return sessionCookie?.value ? validateSessionToken(sessionCookie.value) : null;
 }
 
 export { SESSION_COOKIE_NAME };

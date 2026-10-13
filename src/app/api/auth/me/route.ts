@@ -1,46 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { d1Query } from '@/lib/d1';
-import { getAuth } from 'firebase-admin/auth';
-import { initFirebaseAdmin } from '@/lib/firebase-admin';
 
+interface FirebaseLookupResponse {
+  users?: Array<{ localId?: string; email?: string }>;
+}
+
+/**
+ * Firebase Admin SDK depends on Node-only modules and cannot run in a Worker.
+ * Firebase's Identity Toolkit endpoint validates the ID token server-side; the
+ * web API key identifies the Firebase project and is not a secret.
+ */
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const token = request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '');
+    const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Firebase authentication is not configured' }, { status: 503 });
     }
 
-    const token = authHeader.split('Bearer ')[1];
-    
-    // Initialize Firebase Admin (implement this utility)
-    const adminApp = initFirebaseAdmin();
-    const decodedToken = await getAuth(adminApp).verifyIdToken(token);
-    const uid = decodedToken.uid;
-
-    // Check D1 database for user role
-    const result = await d1Query(
-      'SELECT * FROM customers WHERE firebase_uid = ? LIMIT 1',
-      [uid]
+    const verification = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: token }),
+      }
     );
+    if (!verification.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    if (result.results.length === 0) {
-      // User doesn't exist in our DB yet, create them or return default
-      // For now, return default customer
-      return NextResponse.json({ 
-        role: 'customer', 
-        isAdmin: false 
-      });
-    }
+    const identity = await verification.json() as FirebaseLookupResponse;
+    const firebaseUser = identity.users?.[0];
+    if (!firebaseUser?.localId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const user = result.results[0] as Record<string, unknown>;
-    
-    // For demo purposes, you can hardcode an admin email here
-    // e.g., if (decodedToken.email === 'admin@rasvat.com') return isAdmin: true
-    const isAdmin = user.role === 'admin' || decodedToken.email === 'admin@rasvat.com';
-
-    return NextResponse.json({ 
-      role: user.role || 'customer',
-      isAdmin
+    const result = await d1Query<{ role?: string }>(
+      'SELECT role FROM customers WHERE firebase_uid = ? LIMIT 1',
+      [firebaseUser.localId]
+    );
+    const role = result.results[0]?.role || 'customer';
+    return NextResponse.json({
+      role,
+      isAdmin: role === 'admin' || firebaseUser.email === 'admin@rasvat.com',
     });
   } catch (error) {
     console.error('GET /api/auth/me error:', error);

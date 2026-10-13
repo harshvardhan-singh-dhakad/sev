@@ -12,7 +12,7 @@ export async function GET() {
 
     assertPermission(user.role, 'settings', 'view');
 
-    const settings = getAdminStoreSettings();
+    const settings = await getAdminStoreSettings();
     return NextResponse.json({ settings });
   } catch (error: any) {
     if (error.status === 403) {
@@ -33,7 +33,7 @@ export async function PUT(request: NextRequest) {
     assertPermission(user.role, 'settings', 'edit');
 
     const body = await request.json();
-    const updated = updateAdminStoreSettings(body, user.id, user.name);
+    const updated = await updateAdminStoreSettings(body, user.id, user.name);
 
     return NextResponse.json({ success: true, settings: updated });
   } catch (error: any) {

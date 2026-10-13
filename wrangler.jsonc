@@ -1,7 +1,7 @@
 {
   "name": "sev",
   "main": ".open-next/worker.js",
-  "compatibility_date": "2026-03-01",
+  "compatibility_date": "2026-10-13",
   "compatibility_flags": [
     "nodejs_compat"
   ],
@@ -18,5 +18,14 @@
       "database_name": "rasvat-prod-db",
       "database_id": "18184346-4f3a-481a-9474-5aff3f6be39b"
     }
-  ]
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "rasvat-media"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
 }

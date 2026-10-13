@@ -1,81 +1,97 @@
-// Cloudflare D1 API helper
-// All D1 access is via Cloudflare Workers API routes
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
-const CF_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
-const CF_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
-const CF_D1_DATABASE_ID = process.env.CLOUDFLARE_D1_DATABASE_ID;
+type SqlValue = string | number | boolean | null;
 
-const D1_BASE_URL = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/d1/database/${CF_D1_DATABASE_ID}`;
+interface D1Meta {
+  changes?: number;
+  last_row_id?: number;
+  rows_read?: number;
+  rows_written?: number;
+  duration?: number;
+}
 
-interface D1Result<T = Record<string, unknown>> {
+interface D1AllResult<T> {
   results: T[];
   success: boolean;
-  meta: {
-    changes: number;
-    last_row_id: number;
-    rows_read: number;
-    rows_written: number;
-    duration: number;
-  };
+  meta: D1Meta;
+}
+
+interface D1Statement {
+  bind(...values: SqlValue[]): D1Statement;
+  all<T>(): Promise<D1AllResult<T>>;
+  run(): Promise<{ success: boolean; meta: D1Meta }>;
+}
+
+interface D1Binding {
+  prepare(sql: string): D1Statement;
+  batch<T>(statements: D1Statement[]): Promise<Array<D1AllResult<T> | { success: boolean; meta: D1Meta }>>;
+}
+
+export interface D1Result<T = Record<string, unknown>> {
+  results: T[];
+  success: boolean;
+  meta: D1Meta;
+}
+
+export interface SqlStatement {
+  sql: string;
+  params?: SqlValue[];
+}
+
+/**
+ * Gets the D1 binding injected into the Worker by Wrangler.
+ * A Worker must use this binding instead of the Cloudflare REST API.
+ */
+async function getD1(): Promise<D1Binding> {
+  const context = await getCloudflareContext({ async: true });
+  const db = (context.env as Record<string, unknown>).DB as D1Binding | undefined;
+
+  if (!db || typeof db.prepare !== 'function') {
+    throw new Error('Cloudflare D1 binding "DB" is not configured for this Worker.');
+  }
+
+  return db;
 }
 
 export async function d1Query<T = Record<string, unknown>>(
   sql: string,
-  params: (string | number | boolean | null)[] = []
+  params: SqlValue[] = []
 ): Promise<D1Result<T>> {
-  if (!CF_ACCOUNT_ID || !CF_API_TOKEN || !CF_D1_DATABASE_ID) {
-    throw new Error('Cloudflare D1 configuration is missing. Check environment variables.');
-  }
+  const db = await getD1();
+  const result = await db.prepare(sql).bind(...params).all<T>();
 
-  const response = await fetch(`${D1_BASE_URL}/query`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${CF_API_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ sql, params }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(`D1 query failed: ${JSON.stringify(error)}`);
-  }
-
-  const data = await response.json();
-  if (!data.success) {
-    throw new Error(`D1 query error: ${JSON.stringify(data.errors)}`);
-  }
-
-  return data.result[0] as D1Result<T>;
+  return {
+    results: result.results ?? [],
+    success: result.success,
+    meta: result.meta ?? {},
+  };
 }
 
-export async function d1Batch(
-  statements: { sql: string; params?: (string | number | boolean | null)[] }[]
-): Promise<D1Result[]> {
-  if (!CF_ACCOUNT_ID || !CF_API_TOKEN || !CF_D1_DATABASE_ID) {
-    throw new Error('Cloudflare D1 configuration is missing. Check environment variables.');
+export async function d1Execute(
+  sql: string,
+  params: SqlValue[] = []
+): Promise<{ changes: number }> {
+  const db = await getD1();
+  const result = await db.prepare(sql).bind(...params).run();
+
+  if (!result.success) {
+    throw new Error('D1 write operation failed.');
   }
 
-  const response = await fetch(`${D1_BASE_URL}/batch`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${CF_API_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      statements: statements.map((s) => ({ sql: s.sql, params: s.params || [] })),
-    }),
-  });
+  return { changes: result.meta?.changes ?? 0 };
+}
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(`D1 batch failed: ${JSON.stringify(error)}`);
+/** Runs statements atomically. D1 rolls the whole batch back if one fails. */
+export async function d1Batch(statements: SqlStatement[]): Promise<void> {
+  if (statements.length === 0) return;
+
+  const db = await getD1();
+  const prepared = statements.map((statement) =>
+    db.prepare(statement.sql).bind(...(statement.params ?? []))
+  );
+  const results = await db.batch(prepared);
+
+  if (results.some((result) => !result.success)) {
+    throw new Error('D1 batch operation failed.');
   }
-
-  const data = await response.json();
-  if (!data.success) {
-    throw new Error(`D1 batch error: ${JSON.stringify(data.errors)}`);
-  }
-
-  return data.result as D1Result[];
 }

@@ -62,9 +62,7 @@ export async function reconcilePendingOrders(
           const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
           if (keyId && keySecret && !keyId.includes('placeholder')) {
-            const authHeader = 'Basic ' + (typeof btoa === 'function'
-              ? btoa(`${keyId}:${keySecret}`)
-              : Buffer.from(`${keyId}:${keySecret}`).toString('base64'));
+            const authHeader = `Basic ${btoa(`${keyId}:${keySecret}`)}`;
 
             const res = await fetch(
               `https://api.razorpay.com/v1/orders/${order.razorpay_order_id}/payments`,

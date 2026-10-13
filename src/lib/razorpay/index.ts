@@ -42,10 +42,7 @@ export async function createRazorpayOrder(
     throw new Error('Razorpay credentials (RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET) are missing');
   }
 
-  // Base64 encode credentials using standard btoa / Buffer
-  const authHeader = 'Basic ' + (typeof btoa === 'function' 
-    ? btoa(`${keyId}:${keySecret}`) 
-    : Buffer.from(`${keyId}:${keySecret}`).toString('base64'));
+  const authHeader = `Basic ${btoa(`${keyId}:${keySecret}`)}`;
 
   try {
     const res = await fetch('https://api.razorpay.com/v1/orders', {

@@ -3,6 +3,45 @@
 -- Description: Razorpay Orders Engine Schema for Cloudflare D1
 -- ============================================================
 
+-- Catalog tables are required by the order-engine foreign keys and stock
+-- trigger below. Keep these minimal columns in the first migration; 0002 adds
+-- the richer storefront/admin fields.
+CREATE TABLE IF NOT EXISTS products (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  category_slug TEXT NOT NULL DEFAULT '',
+  short_description TEXT NOT NULL DEFAULT '',
+  description TEXT NOT NULL DEFAULT '',
+  spice_level TEXT NOT NULL DEFAULT 'mild',
+  storage TEXT NOT NULL DEFAULT '',
+  veg_mark TEXT NOT NULL DEFAULT 'veg',
+  country_of_origin TEXT NOT NULL DEFAULT 'India',
+  status TEXT NOT NULL DEFAULT 'draft',
+  featured INTEGER NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS product_variants (
+  id TEXT PRIMARY KEY,
+  product_id TEXT NOT NULL,
+  label TEXT NOT NULL,
+  weight_grams INTEGER NOT NULL,
+  price_paise INTEGER NOT NULL,
+  sku TEXT UNIQUE NOT NULL,
+  stock_qty INTEGER,
+  min_qty INTEGER NOT NULL DEFAULT 1,
+  max_qty INTEGER,
+  step INTEGER NOT NULL DEFAULT 1,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
 -- 1. Orders Table
 CREATE TABLE IF NOT EXISTS orders (
   id TEXT PRIMARY KEY,

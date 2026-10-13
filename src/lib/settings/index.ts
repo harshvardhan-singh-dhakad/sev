@@ -1,4 +1,4 @@
-import { getDb } from '@/lib/db';
+import { execute, query } from '@/lib/db';
 import { logAuditEvent } from '@/lib/audit';
 
 export interface AdminStoreSettings {
@@ -26,72 +26,63 @@ const DEFAULT_SETTINGS: AdminStoreSettings = {
   gstin: null,
   manufacturer: null,
   customer_care: null,
-  min_cart_value_paise: 19900, // 19900 paise = Rs 199
+  min_cart_value_paise: 19900,
   free_shipping_above_paise: null,
-  shipping_charge_paise: 5000, // Rs 50 flat rate
+  shipping_charge_paise: 5000,
   bulk_minimum_kg: 5,
   email_sender: 'orders@rasvat.in',
 };
 
-export function getAdminStoreSettings(): AdminStoreSettings {
-  const db = getDb();
-  const rows = db.prepare('SELECT key, value FROM settings').all() as { key: string; value: string }[];
+function asNumber(value: string | undefined, fallback: number): number {
+  const parsed = value === undefined ? NaN : Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
 
-  const settingsMap = new Map<string, string>();
-  rows.forEach((r) => settingsMap.set(r.key, r.value));
+export async function getAdminStoreSettings(): Promise<AdminStoreSettings> {
+  const rows = await query<{ key: string; value: string }>('SELECT key, value FROM settings');
+  const values = new Map(rows.map((row) => [row.key, row.value]));
+  const nullable = (key: keyof AdminStoreSettings, fallback: string | null) => values.has(key)
+    ? values.get(key) || null
+    : fallback;
 
   return {
-    store_name: settingsMap.get('store_name') || DEFAULT_SETTINGS.store_name,
-    contact_email: settingsMap.get('contact_email') || DEFAULT_SETTINGS.contact_email,
-    contact_phone: settingsMap.get('contact_phone') || DEFAULT_SETTINGS.contact_phone,
-    address: settingsMap.get('address') || DEFAULT_SETTINGS.address,
-    fssai_no: settingsMap.get('fssai_no') || DEFAULT_SETTINGS.fssai_no,
-    gstin: settingsMap.get('gstin') || DEFAULT_SETTINGS.gstin,
-    manufacturer: settingsMap.get('manufacturer') || DEFAULT_SETTINGS.manufacturer,
-    customer_care: settingsMap.get('customer_care') || DEFAULT_SETTINGS.customer_care,
-    min_cart_value_paise: settingsMap.has('min_cart_value_paise')
-      ? parseInt(settingsMap.get('min_cart_value_paise')!, 10)
-      : DEFAULT_SETTINGS.min_cart_value_paise,
-    free_shipping_above_paise: settingsMap.has('free_shipping_above_paise')
-      ? settingsMap.get('free_shipping_above_paise') === ''
-        ? null
-        : parseInt(settingsMap.get('free_shipping_above_paise')!, 10)
+    store_name: values.get('store_name') || DEFAULT_SETTINGS.store_name,
+    contact_email: values.get('contact_email') || DEFAULT_SETTINGS.contact_email,
+    contact_phone: values.get('contact_phone') || DEFAULT_SETTINGS.contact_phone,
+    address: values.get('address') || DEFAULT_SETTINGS.address,
+    fssai_no: nullable('fssai_no', DEFAULT_SETTINGS.fssai_no),
+    gstin: nullable('gstin', DEFAULT_SETTINGS.gstin),
+    manufacturer: nullable('manufacturer', DEFAULT_SETTINGS.manufacturer),
+    customer_care: nullable('customer_care', DEFAULT_SETTINGS.customer_care),
+    min_cart_value_paise: asNumber(values.get('min_cart_value_paise'), DEFAULT_SETTINGS.min_cart_value_paise),
+    free_shipping_above_paise: values.has('free_shipping_above_paise')
+      ? asNumber(values.get('free_shipping_above_paise'), 0) || null
       : DEFAULT_SETTINGS.free_shipping_above_paise,
-    shipping_charge_paise: settingsMap.has('shipping_charge_paise')
-      ? parseInt(settingsMap.get('shipping_charge_paise')!, 10)
-      : DEFAULT_SETTINGS.shipping_charge_paise,
-    bulk_minimum_kg: settingsMap.has('bulk_minimum_kg')
-      ? parseInt(settingsMap.get('bulk_minimum_kg')!, 10)
-      : DEFAULT_SETTINGS.bulk_minimum_kg,
-    email_sender: settingsMap.get('email_sender') || DEFAULT_SETTINGS.email_sender,
+    shipping_charge_paise: asNumber(values.get('shipping_charge_paise'), DEFAULT_SETTINGS.shipping_charge_paise),
+    bulk_minimum_kg: asNumber(values.get('bulk_minimum_kg'), DEFAULT_SETTINGS.bulk_minimum_kg),
+    email_sender: values.get('email_sender') || DEFAULT_SETTINGS.email_sender,
   };
 }
 
-export function updateAdminStoreSettings(
+export async function updateAdminStoreSettings(
   updates: Partial<AdminStoreSettings>,
   userId?: string,
   userName?: string
-): AdminStoreSettings {
-  const db = getDb();
-  const current = getAdminStoreSettings();
+): Promise<AdminStoreSettings> {
+  const current = await getAdminStoreSettings();
   const now = new Date().toISOString();
 
-  const insertStmt = db.prepare(`
-    INSERT INTO settings (key, value, updated_at, updated_by)
-    VALUES (?, ?, ?, ?)
-    ON CONFLICT(key) DO UPDATE SET
-      value = excluded.value,
-      updated_at = excluded.updated_at,
-      updated_by = excluded.updated_by
-  `);
+  for (const [key, value] of Object.entries(updates)) {
+    if (!(key in DEFAULT_SETTINGS)) continue;
+    await execute(
+      `INSERT INTO settings (key, value, updated_at, updated_by)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at, updated_by = excluded.updated_by`,
+      [key, value === null || value === undefined ? '' : String(value), now, userId || null]
+    );
+  }
 
-  Object.entries(updates).forEach(([key, val]) => {
-    const stringVal = val === null || val === undefined ? '' : String(val);
-    insertStmt.run(key, stringVal, now, userId || null);
-  });
-
-  // Append to audit log
-  logAuditEvent({
+  await logAuditEvent({
     userId,
     userName,
     userRole: 'owner',

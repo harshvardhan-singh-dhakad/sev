@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
-    const data = listMedia(limit, offset);
+    const data = await listMedia(limit, offset);
     return NextResponse.json(data);
   } catch (error: any) {
     if (error.status === 403) {
@@ -45,10 +45,8 @@ export async function POST(request: NextRequest) {
     }
 
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
     const mediaItem = await uploadMedia({
-      buffer,
+      bytes: new Uint8Array(arrayBuffer),
       originalName: file.name,
       altText,
       uploadedBy: user.id,
@@ -80,7 +78,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Media ID required' }, { status: 400 });
     }
 
-    deleteMedia(mediaId, user.id);
+    await deleteMedia(mediaId, user.id);
     return NextResponse.json({ success: true });
   } catch (error: any) {
     if (error.status === 403) {

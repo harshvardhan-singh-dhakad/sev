@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
-    const data = listAuditLogs({ entityType, action, limit, offset });
+    const data = await listAuditLogs({ entityType, action, limit, offset });
     return NextResponse.json(data);
   } catch (error: any) {
     if (error.status === 403) {

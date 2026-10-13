@@ -64,10 +64,16 @@ if (fs.existsSync(loadManifestPath)) {
     );
   }
   // Prevent fatal worker exception on unexpected manifest calls
-  const throwCall = 'throw new Error(`Unexpected loadManifest(${$PATH}) call!`);';
-  const safeFallback = 'console.warn(`[OpenNext] Missing manifest: ${$PATH}, fallback to empty object`); return {};';
-  if (content.includes(throwCall)) {
-    content = content.replace(throwCall, safeFallback);
+  const manifestErrorIdx = content.indexOf('Unexpected loadManifest') !== -1
+    ? content.indexOf('Unexpected loadManifest')
+    : content.indexOf('Missing manifest');
+  if (manifestErrorIdx !== -1) {
+    const lineStart = content.lastIndexOf('\n', manifestErrorIdx) + 1;
+    const lineEnd = content.indexOf('\n', manifestErrorIdx);
+    content = content.substring(0, lineStart) +
+      '  console.warn("[OpenNext] Missing manifest, fallback to empty object"); return {};' +
+      content.substring(lineEnd);
+    console.log('[patch-opennext] Replaced throw with safe fallback in load-manifest.js');
   }
   fs.writeFileSync(loadManifestPath, content, 'utf8');
   console.log('[patch-opennext] Successfully patched load-manifest.js for safe manifest handling.');

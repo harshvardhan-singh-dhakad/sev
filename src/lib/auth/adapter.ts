@@ -1,7 +1,7 @@
 /**
  * Unified Auth Adapter Interface & Migration Placeholder
  *
- * Currently Active: LocalAuthAdapter (Native node:sqlite + PBKDF2 + HttpOnly Session Cookies)
+ * Currently Active: D1-backed session auth (Web Crypto PBKDF2 + HttpOnly Session Cookies)
  * Ready Migration Target: FirebaseAuthAdapter (Firebase Admin SDK / Client Auth with custom claims)
  *
  * To switch to Firebase Auth in the future:
@@ -29,12 +29,12 @@ export interface AuthAdapter {
 export class LocalAuthAdapter implements AuthAdapter {
   async verifySession(token: string): Promise<AdminUser | null> {
     if (!token) return null;
-    return validateSessionToken(token);
+    return await validateSessionToken(token);
   }
 
   async logout(token: string): Promise<void> {
     const { destroySession } = await import('./session');
-    destroySession(token);
+    await destroySession(token);
   }
 }
 
@@ -47,7 +47,7 @@ export class FirebaseAuthAdapter implements AuthAdapter {
     if (!idToken) return null;
 
     // Placeholder: When Firebase Admin SDK is installed and credentials exist:
-    // const admin = await import('firebase-admin');
+    // Verify the token with Firebase's REST API when this adapter is activated.
     // const decodedToken = await admin.auth().verifyIdToken(idToken);
     //
     // Map Firebase User & Custom Claims to AdminUser:
