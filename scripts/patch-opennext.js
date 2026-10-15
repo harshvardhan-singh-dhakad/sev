@@ -75,6 +75,36 @@ if (fs.existsSync(loadManifestPath)) {
       content.substring(lineEnd);
     console.log('[patch-opennext] Replaced throw with safe fallback in load-manifest.js');
   }
+
+  // Prevent fatal worker exception on unexpected evalManifest calls
+  const evalManifestPattern = /throw new Error\(\\?`Unexpected evalManifest\(\\?\$\{\$PATH\}\) call!\\?`\);/;
+  if (evalManifestPattern.test(content)) {
+    content = content.replace(
+      evalManifestPattern,
+      'console.warn("[OpenNext] Unexpected evalManifest", $PATH); return { __RSC_MANIFEST: {} };'
+    );
+    console.log('[patch-opennext] Patched evalManifest with safe fallback in load-manifest.js');
+  }
+
   fs.writeFileSync(loadManifestPath, content, 'utf8');
   console.log('[patch-opennext] Successfully patched load-manifest.js for safe manifest handling.');
 }
+
+// 3. Patch find-dir in @opennextjs/cloudflare for safe fallback
+const findDirPath = path.join(__dirname, '..', 'node_modules', '@opennextjs', 'cloudflare', 'dist', 'cli', 'build', 'patches', 'plugins', 'find-dir.js');
+if (fs.existsSync(findDirPath)) {
+  let content = fs.readFileSync(findDirPath, 'utf8');
+  const findDirPattern = /throw new Error\(\\?`Unexpected findDir\(\\?\$\{\$DIR\}, \\?\$\{\$NAME\}\) call!\\?`\);/;
+  if (findDirPattern.test(content)) {
+    content = content.replace(
+      findDirPattern,
+      'return null;'
+    );
+    fs.writeFileSync(findDirPath, content, 'utf8');
+    console.log('[patch-opennext] Successfully patched find-dir.js for safe fallback.');
+  } else {
+    console.log('[patch-opennext] find-dir.js is already patched.');
+  }
+}
+
+
