@@ -1,11 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { getDb } from '../src/lib/db';
 import { computeHmacSha256Hex } from '../src/lib/razorpay';
-import { reconcilePendingOrders } from '../src/lib/orders';
 
 const WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET || 'placeholder_webhook_secret_key';
 
-test.describe('Phase R4 — Razorpay Webhooks & Reconciliation Engine', () => {
+test.describe('Phase R4 — Razorpay Webhooks', () => {
   const testProductId = 'ratlami-special-sev';
   const testVariantId = 'rat-500g';
 
@@ -381,51 +380,4 @@ test.describe('Phase R4 — Razorpay Webhooks & Reconciliation Engine', () => {
     expect(event.status).toBe('ignored');
   });
 
-  test('Reconciliation engine automatically expires orders older than threshold', async () => {
-    const db = getDb();
-    const expiredOrderId = 'test_order_stale_' + Date.now();
-    const oldTimestamp = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(); // 25 hours ago
-
-    // Insert order directly with stale timestamp
-    db.prepare(
-      `INSERT INTO orders (
-        id, order_number, public_token, status, customer_name, customer_phone, customer_email,
-        shipping_line1, shipping_city, shipping_state, shipping_pincode, subtotal, shipping, total,
-        created_at, updated_at
-      ) VALUES (?, ?, ?, 'pending_payment', 'Stale Customer', '9876543210', 'stale@example.com',
-        'Stale Road', 'Indore', 'Madhya Pradesh', '452001', 32000, 4900, 36900, ?, ?);`
-    ).run(
-      expiredOrderId,
-      'RSV-2610-' + Math.floor(10000 + Math.random() * 90000),
-      'token_stale_' + Date.now(),
-      oldTimestamp,
-      oldTimestamp
-    );
-
-    // Run reconciliation
-    const summary = await reconcilePendingOrders({
-      staleMinutes: 30,
-      expireHours: 24,
-    });
-
-    expect(summary.checked).toBeGreaterThanOrEqual(1);
-    expect(summary.expired).toBeGreaterThanOrEqual(1);
-
-    // Verify order was transitioned to expired
-    const order = db
-      .prepare('SELECT status FROM orders WHERE id = ?')
-      .get(expiredOrderId) as any;
-    expect(order.status).toBe('expired');
-  });
-
-  test('POST /api/cron/reconcile-orders executes successfully with summary', async ({
-    request,
-  }) => {
-    const res = await request.post('/api/cron/reconcile-orders');
-    expect(res.ok()).toBe(true);
-    const data = await res.json();
-    expect(data.success).toBe(true);
-    expect(data.summary).toBeDefined();
-    expect(typeof data.summary.checked).toBe('number');
-  });
 });

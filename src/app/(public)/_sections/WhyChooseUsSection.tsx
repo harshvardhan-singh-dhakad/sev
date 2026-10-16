@@ -25,9 +25,9 @@ const DEFAULT_FEATURES = [
   {
     id: 'hygiene',
     icon: 'Lock',
-    title: 'Hygienic Processing',
+    title: 'Clear Product Information',
     description:
-      'Manufactured in a FSSAI-certified facility with strict hygiene standards and quality checks at every step.',
+      'Review product and pack details on the product page before choosing what to order.',
   },
   {
     id: 'taste',

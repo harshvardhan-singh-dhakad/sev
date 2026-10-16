@@ -37,69 +37,58 @@ export async function createRazorpayOrder(
 ): Promise<RazorpayOrderResult> {
   const keyId = process.env.RAZORPAY_KEY_ID;
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  const mockMode = process.env.NODE_ENV !== 'production' && process.env.RAZORPAY_MOCK_MODE === 'true';
+  const hasPlaceholderCredentials = [keyId, keySecret].some((value) =>
+    value ? /placeholder|yourtestkey|yourwebhooksecret/i.test(value) : false
+  );
 
-  if (!keyId || !keySecret) {
-    throw new Error('Razorpay credentials (RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET) are missing');
+  if ((!keyId || !keySecret || hasPlaceholderCredentials) && mockMode) {
+    return {
+      id: `order_mock_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+      amount: input.amount,
+      currency: input.currency || 'INR',
+      receipt: input.receipt,
+      status: 'created',
+    };
+  }
+
+  if (!keyId || !keySecret || hasPlaceholderCredentials) {
+    throw new Error('Set valid Razorpay credentials: RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.');
+  }
+  if (!/^rzp_(test|live)_/.test(keyId)) {
+    throw new Error('RAZORPAY_KEY_ID must be a Razorpay test or live key ID.');
   }
 
   const authHeader = `Basic ${btoa(`${keyId}:${keySecret}`)}`;
+  const res = await fetch('https://api.razorpay.com/v1/orders', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: authHeader,
+    },
+    body: JSON.stringify({
+      amount: input.amount,
+      currency: input.currency || 'INR',
+      receipt: input.receipt,
+      notes: input.notes || {},
+    }),
+  });
 
-  try {
-    const res = await fetch('https://api.razorpay.com/v1/orders', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: authHeader,
-      },
-      body: JSON.stringify({
-        amount: input.amount,
-        currency: input.currency || 'INR',
-        receipt: input.receipt,
-        notes: input.notes || {},
-      }),
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      return {
-        id: data.id,
-        amount: data.amount,
-        currency: data.currency,
-        receipt: data.receipt,
-        status: data.status,
-      };
-    }
-
-    // Handle dev / mock fallback for placeholder credentials
-    if (keyId.includes('placeholder')) {
-      const mockId = `order_mock_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
-      return {
-        id: mockId,
-        amount: input.amount,
-        currency: input.currency || 'INR',
-        receipt: input.receipt,
-        status: 'created',
-      };
-    }
-
+  if (!res.ok) {
     const errData = await res.json().catch(() => ({}));
     throw new Error(
       errData?.error?.description || `Razorpay API order creation failed with status ${res.status}`
     );
-  } catch (err: any) {
-    // If placeholder credentials used in local testing
-    if (keyId.includes('placeholder')) {
-      const mockId = `order_mock_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
-      return {
-        id: mockId,
-        amount: input.amount,
-        currency: input.currency || 'INR',
-        receipt: input.receipt,
-        status: 'created',
-      };
-    }
-    throw err;
   }
+
+  const data = await res.json();
+  return {
+    id: data.id,
+    amount: data.amount,
+    currency: data.currency,
+    receipt: data.receipt,
+    status: data.status,
+  };
 }
 
 /**

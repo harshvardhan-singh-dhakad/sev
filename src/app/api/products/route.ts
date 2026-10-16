@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { d1Query } from '@/lib/d1';
+import { getAuthenticatedAdmin } from '@/lib/auth/session';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
+    const admin = await getAuthenticatedAdmin();
+    const requestedStatus = searchParams.get('status');
+    const mayViewDrafts = Boolean(admin && hasPermission(admin.role, 'catalog', 'view'));
+    const status = mayViewDrafts && requestedStatus ? requestedStatus : 'active';
     const categoryId = searchParams.get('categoryId');
     const categorySlug = searchParams.get('category');
     const bestSeller = searchParams.get('bestSeller');
@@ -13,8 +18,10 @@ export async function GET(request: NextRequest) {
     const recommended = searchParams.get('recommended');
     const search = searchParams.get('search');
     const sort = searchParams.get('sort') || 'newest';
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const offset = parseInt(searchParams.get('offset') || '0');
+    const parsedLimit = Number.parseInt(searchParams.get('limit') || '20', 10);
+    const parsedOffset = Number.parseInt(searchParams.get('offset') || '0', 10);
+    const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 100) : 20;
+    const offset = Number.isFinite(parsedOffset) ? Math.max(parsedOffset, 0) : 0;
 
     const conditions: string[] = [];
     const params: (string | number | boolean | null)[] = [];
@@ -117,9 +124,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const admin = await getAuthenticatedAdmin();
+    if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!hasPermission(admin.role, 'catalog', 'create')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -131,7 +139,11 @@ export async function POST(request: NextRequest) {
       seoTitle, seoDescription, seoKeywords, ogImage,
     } = body;
 
-    if (!name || !slug) {
+    if (status === 'active' && !hasPermission(admin.role, 'catalog', 'publish')) {
+      return NextResponse.json({ error: 'You do not have permission to publish products' }, { status: 403 });
+    }
+
+    if (typeof name !== 'string' || typeof slug !== 'string' || !name.trim() || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
       return NextResponse.json({ error: 'Name and slug are required' }, { status: 400 });
     }
 

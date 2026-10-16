@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Create corresponding Razorpay Order
-    let razorpayData = null;
+    let razorpayData;
     try {
       const razorpayOrder = await createRazorpayOrder({
         amount: order.total,
@@ -129,13 +129,17 @@ export async function POST(request: NextRequest) {
       await attachRazorpayOrderId(order.id, razorpayOrder.id);
 
       razorpayData = {
-        keyId: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
+        keyId: process.env.RAZORPAY_KEY_ID || '',
         orderId: razorpayOrder.id,
         amount: razorpayOrder.amount,
         currency: razorpayOrder.currency,
       };
     } catch (rzpErr) {
-      console.error('Warning: Razorpay order initialization error:', rzpErr);
+      console.error('Razorpay order initialization error:', rzpErr);
+      return NextResponse.json(
+        { error: 'Payment gateway is not available. Please try again later.' },
+        { status: 503 }
+      );
     }
 
     return NextResponse.json(

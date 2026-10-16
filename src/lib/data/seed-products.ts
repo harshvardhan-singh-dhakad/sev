@@ -118,7 +118,7 @@ function createStandardVariants(productSlug: string, prefix: string): CatalogVar
 
 export const SEED_STORE_SETTINGS: StoreSettings = {
   min_cart_value: 19900, // 19900 paise = Rs 199
-  free_shipping_above: null,
+  free_shipping_above: 49900, // Match the cart and checkout: free shipping from ₹499.
   fssai_no: null,
   manufacturer: null,
   customer_care: null,

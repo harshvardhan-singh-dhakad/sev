@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import PublicLayout from '@/components/layout/PublicLayout';
+import { absoluteUrl } from '@/lib/site-url';
 
 export const metadata: Metadata = {
   title: 'Terms of Service | Rasvat Authentic Snacks',
   description: 'Terms and conditions governing orders, deliveries, and use of Rasvat online store.',
+  alternates: { canonical: absoluteUrl('/terms') },
 };
 
 export default function TermsPage() {
@@ -35,29 +37,27 @@ export default function TermsPage() {
 
               <section>
                 <h2 className="text-lg font-bold mb-2">2. Pricing, Products & Orders</h2>
-                <p>
-                  All our snacks are prepared using traditional recipes from Malwa, Madhya Pradesh. All prices displayed on our website are inclusive of applicable GST (Goods and Services Tax) in Indian Rupees (INR). We reserve the right to modify prices or adjust pack sizes without prior notice. Minimum order values and shipping rules are applied at checkout.
-                </p>
+                <p>Product details, prices, order minimums, and shipping charges are shown on the website and at checkout. The checkout screen shows the total before payment. We may update a listing or price; an order is placed only after payment is completed successfully.</p>
               </section>
 
               <section>
                 <h2 className="text-lg font-bold mb-2">3. Payments & Security</h2>
                 <p>
-                  All online payments are securely processed through RBI-authorized payment gateways including Razorpay. We support UPI, Debit/Credit Cards, NetBanking, and authorized wallets. We never store your full payment card details or CVVs on our servers.
+                  Online payments are processed through Razorpay. Payment options depend on the payment methods enabled for your transaction. Rasvat does not ask for your UPI PIN or card CVV outside the payment flow.
                 </p>
               </section>
 
               <section>
                 <h2 className="text-lg font-bold mb-2">4. Delivery & Logistics</h2>
                 <p>
-                  Orders are dispatched via trusted courier partners across India. Dispatch typically takes 24 to 48 hours from the time of order confirmation. Delivery timelines range from 2 to 5 business days for major metropolitan hubs and 4 to 7 business days for regional destinations.
+                  Current order minimums, shipping charges, and dispatch estimates are described in our <a className="underline" href="/shipping-policy">Shipping & Delivery Policy</a>. Delivery estimates can vary by destination and courier service.
                 </p>
               </section>
 
               <section>
                 <h2 className="text-lg font-bold mb-2">5. Contact & Support</h2>
                 <p>
-                  For any questions regarding orders, billing, or these terms, please reach out to our customer care team at <span className="font-semibold text-[var(--color-primary)]">support@rasvat.in</span> or call us at <span className="font-semibold text-[var(--color-primary)]">+91 98260 00000</span>.
+                  For questions about an order or these terms, contact <a className="font-semibold text-[var(--color-primary)] underline" href="mailto:support@rasvat.in">support@rasvat.in</a>.
                 </p>
               </section>
             </div>

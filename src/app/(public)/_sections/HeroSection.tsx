@@ -144,10 +144,10 @@ export function HeroSection() {
             >
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
                 {[
-                  { number: '50+', label: 'Sev Variants' },
-                  { number: '10,000+', label: 'Happy Customers' },
-                  { number: '100+', label: 'Cities Served' },
-                  { number: '25 KG+', label: 'Min Bulk Orders' },
+                  { number: 'Sev', label: 'Explore varieties' },
+                  { number: 'Retail', label: 'Shop online' },
+                  { number: 'Bulk', label: 'Business enquiries' },
+                  { number: 'Track', label: 'Follow your order' },
                 ].map(({ number, label }) => (
                   <div key={label}>
                     <p

@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+:root {
+  --font-inter: Inter, "Segoe UI", system-ui, sans-serif;
+  --font-outfit: Outfit, Inter, "Segoe UI", system-ui, sans-serif;
+}
+
 /* ============================================================
    RASVAT - Premium Sev Brand Design System
    ============================================================ */
@@ -38,8 +43,8 @@
   --color-danger: #DC2626;
 
   /* Typography */
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-display: 'Outfit', system-ui, sans-serif;
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-outfit);
 
   /* Shadows */
   --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.07);
@@ -66,7 +71,7 @@
   }
 
   body {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--font-inter);
     background-color: #F8FAFC;
     color: #111827;
     line-height: 1.6;
@@ -74,7 +79,7 @@
 
   /* ---- Typography ---- */
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', system-ui, sans-serif;
+    font-family: var(--font-outfit);
     font-weight: 700;
     line-height: 1.25;
     color: var(--color-ink);
@@ -364,7 +369,7 @@ table.data-table {
 
 /* ---- Section headings ---- */
 .section-heading {
-  font-family: 'Outfit', system-ui, sans-serif;
+  font-family: var(--font-outfit);
   font-size: 2rem;
   font-weight: 700;
   color: var(--color-navy);

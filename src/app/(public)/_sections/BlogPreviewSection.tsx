@@ -1,77 +1,36 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Calendar, Tag, Newspaper } from 'lucide-react';
-import { Blog } from '@/lib/types';
 import { formatDate, truncate } from '@/lib/utils';
+import { d1Query } from '@/lib/d1';
 
-const DEMO_BLOGS: Blog[] = [
-  {
-    id: 'b1',
-    title: 'The Art of Making Perfect Indori Sev',
-    slug: 'art-of-making-perfect-indori-sev',
-    author: 'Rasvat Team',
-    authorId: 'a1',
-    categoryId: 'c1',
-    categoryName: 'Sev',
-    tags: ['indori', 'recipe', 'tradition'],
-    excerpt:
-      'Discover the secret behind the perfect crunch and authentic flavor of Indori Sev — a culinary tradition that dates back generations.',
-    content: '',
-    status: 'published',
-    publishedAt: '2026-03-10T10:00:00.000Z',
-    viewCount: 324,
-    createdAt: '2026-03-10T10:00:00.000Z',
-    updatedAt: '2026-03-10T10:00:00.000Z',
-  },
-  {
-    id: 'b2',
-    title: '5 Ways to Use Sev in Your Daily Cooking',
-    slug: '5-ways-to-use-sev-in-daily-cooking',
-    author: 'Rasvat Team',
-    authorId: 'a1',
-    categoryId: 'c2',
-    categoryName: 'Recipes',
-    tags: ['recipes', 'cooking', 'chaat'],
-    excerpt:
-      'Beyond the snack bowl — explore creative ways to incorporate premium Sev into your everyday meals, from breakfast to dinner.',
-    content: '',
-    status: 'published',
-    publishedAt: '2026-03-05T10:00:00.000Z',
-    viewCount: 189,
-    createdAt: '2026-03-05T10:00:00.000Z',
-    updatedAt: '2026-03-05T10:00:00.000Z',
-  },
-  {
-    id: 'b3',
-    title: 'Bulk Sev Buying Guide for Retailers',
-    slug: 'bulk-sev-buying-guide-for-retailers',
-    author: 'Rasvat Team',
-    authorId: 'a1',
-    categoryId: 'c3',
-    categoryName: 'Business',
-    tags: ['bulk', 'wholesale', 'retailers'],
-    excerpt:
-      'A comprehensive guide for retailers and distributors on sourcing quality Sev in bulk — pricing, quantities, storage and more.',
-    content: '',
-    status: 'published',
-    publishedAt: '2026-03-01T10:00:00.000Z',
-    viewCount: 421,
-    createdAt: '2026-03-01T10:00:00.000Z',
-    updatedAt: '2026-03-01T10:00:00.000Z',
-  },
-];
+interface BlogPreview {
+  id: string;
+  title: string;
+  slug: string;
+  categoryName: string | null;
+  excerpt: string;
+  featuredImage: string | null;
+  publishedAt: string | null;
+}
 
-async function getLatestBlogs(): Promise<Blog[]> {
+async function getLatestBlogs(): Promise<BlogPreview[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/blogs?status=published&limit=3`, {
-      next: { revalidate: 300 },
-    });
-    if (!res.ok) return DEMO_BLOGS;
-    const data = await res.json();
-    return data.blogs?.length ? data.blogs : DEMO_BLOGS;
+    const result = await d1Query<Record<string, unknown>>(
+      `SELECT id, title, slug, category_name, excerpt, featured_image, published_at
+       FROM blogs WHERE status = 'published' ORDER BY published_at DESC LIMIT 3`,
+    );
+    return result.results.map((row) => ({
+      id: String(row.id),
+      title: String(row.title),
+      slug: String(row.slug),
+      categoryName: row.category_name ? String(row.category_name) : null,
+      excerpt: row.excerpt ? String(row.excerpt) : '',
+      featuredImage: row.featured_image ? String(row.featured_image) : null,
+      publishedAt: row.published_at ? String(row.published_at) : null,
+    }));
   } catch {
-    return DEMO_BLOGS;
+    return [];
   }
 }
 
@@ -129,7 +88,7 @@ export async function BlogPreviewSection() {
   );
 }
 
-function BlogCard({ blog }: { blog: Blog }) {
+function BlogCard({ blog }: { blog: BlogPreview }) {
   return (
     <article
       className="group bg-white rounded-2xl overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-1"

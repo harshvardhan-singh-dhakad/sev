@@ -7,6 +7,7 @@ import {
   getStoreSettings,
 } from '@/lib/catalog';
 import { ProductDetailClient } from '@/components/pdp/ProductDetailClient';
+import { absoluteUrl } from '@/lib/site-url';
 
 interface ProductPageProps {
   params: Promise<{
@@ -21,9 +22,9 @@ export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug, true);
+  const product = getProductBySlug(slug, false);
 
-  if (!product) {
+  if (!product || product.status !== 'active') {
     return {
       title: 'Product Not Found | Rasvat',
       description: 'The requested product could not be found.',
@@ -36,6 +37,7 @@ export async function generateMetadata({
   return {
     title: `${product.name} | Rasvat Premium Sev & Namkeen`,
     description: product.short_description,
+    alternates: { canonical: absoluteUrl(`/shop/${product.slug}`) },
     openGraph: {
       title: `${product.name} | Rasvat Authentic Sev`,
       description: product.short_description,
@@ -59,9 +61,9 @@ export default async function ProductDetailPage({
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
 
-  const product = getProductBySlug(slug, true);
+  const product = getProductBySlug(slug, false);
 
-  if (!product) {
+  if (!product || product.status !== 'active') {
     notFound();
   }
 
@@ -107,25 +109,25 @@ export default async function ProductDetailPage({
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://rasvat.in/',
+        item: absoluteUrl('/'),
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Shop',
-        item: 'https://rasvat.in/shop',
+        item: absoluteUrl('/shop'),
       },
       {
         '@type': 'ListItem',
         position: 3,
         name: product.category,
-        item: `https://rasvat.in/shop?category=${product.category}`,
+        item: absoluteUrl(`/shop?category=${encodeURIComponent(product.category)}`),
       },
       {
         '@type': 'ListItem',
         position: 4,
         name: product.name,
-        item: `https://rasvat.in/shop/${product.slug}`,
+        item: absoluteUrl(`/shop/${product.slug}`),
       },
     ],
   };

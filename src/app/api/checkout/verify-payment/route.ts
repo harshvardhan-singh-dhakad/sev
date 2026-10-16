@@ -34,32 +34,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Idempotency check: If already confirmed/paid, return success immediately
-    if (
-      order.status === 'confirmed' ||
-      order.status === 'packed' ||
-      order.status === 'shipped' ||
-      order.status === 'delivered'
-    ) {
-      return NextResponse.json({
-        success: true,
-        verified: true,
-        alreadyProcessed: true,
-        publicToken: order.public_token,
-        orderNumber: order.order_number,
-      });
-    }
-
-    // 3. Verify order is in pending_payment state
-    if (order.status !== 'pending_payment') {
-      return NextResponse.json(
-        { error: `Cannot verify payment for order with status '${order.status}'` },
-        { status: 400 }
-      );
-    }
-
-    // 4. Verify Razorpay Order ID matches order's attached ID (if set)
-    if (order.razorpay_order_id && order.razorpay_order_id !== razorpayOrderId) {
+    // Always require the Razorpay order ID that is stored on this exact order.
+    if (!order.razorpay_order_id || order.razorpay_order_id !== razorpayOrderId) {
       console.error(
         `Razorpay Order ID mismatch: expected ${order.razorpay_order_id}, got ${razorpayOrderId}`
       );
@@ -69,15 +45,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. Verify cryptographic HMAC-SHA256 signature using Web Crypto
+    // Verify cryptographic HMAC-SHA256 signature before returning idempotent success.
     let isValidSignature = await verifyRazorpayPaymentSignature({
       orderId: razorpayOrderId,
       paymentId: razorpayPaymentId,
       signature: razorpaySignature,
     });
 
-    // Dev/Mock fallback for automated testing when using mock order IDs
-    if (!isValidSignature && razorpayOrderId.startsWith('order_mock_') && razorpaySignature === 'mock_signature') {
+    // Explicit local-only mock mode for development; never accept mock signatures in production.
+    const allowLocalMock = process.env.NODE_ENV !== 'production' && process.env.RAZORPAY_MOCK_MODE === 'true';
+    if (
+      !isValidSignature &&
+      allowLocalMock &&
+      razorpayOrderId.startsWith('order_mock_') &&
+      razorpaySignature === 'mock_signature'
+    ) {
       isValidSignature = true;
     }
 
@@ -95,6 +77,23 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(
         { error: 'Payment signature could not be verified' },
+        { status: 400 }
+      );
+    }
+
+    if (['confirmed', 'packed', 'shipped', 'delivered'].includes(order.status)) {
+      return NextResponse.json({
+        success: true,
+        verified: true,
+        alreadyProcessed: true,
+        publicToken: order.public_token,
+        orderNumber: order.order_number,
+      });
+    }
+
+    if (order.status !== 'pending_payment' && order.status !== 'expired') {
+      return NextResponse.json(
+        { error: `Cannot verify payment for order with status '${order.status}'` },
         { status: 400 }
       );
     }

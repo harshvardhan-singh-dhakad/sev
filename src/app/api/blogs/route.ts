@@ -1,19 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { d1Query } from '@/lib/d1';
+import { getAuthenticatedAdmin } from '@/lib/auth/session';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const admin = await getAuthenticatedAdmin();
+    const requestedStatus = searchParams.get('status');
+    const status = admin && hasPermission(admin.role, 'content', 'view') && requestedStatus
+      ? requestedStatus
+      : 'published';
+    const parsedLimit = Number.parseInt(searchParams.get('limit') || '20', 10);
+    const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 50) : 20;
 
     let query = 'SELECT * FROM blogs';
     const params: (string | number | boolean | null)[] = [];
 
-    if (status) {
-      query += ' WHERE status = ?';
-      params.push(status);
-    }
+    query += ' WHERE status = ?';
+    params.push(status);
 
     query += ' ORDER BY created_at DESC LIMIT ?';
     params.push(limit);
@@ -50,10 +55,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Admin auth check
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader) {
-      // return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const admin = await getAuthenticatedAdmin();
+    if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!hasPermission(admin.role, 'content', 'create')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -63,13 +68,19 @@ export async function POST(request: NextRequest) {
       seoTitle, seoDescription
     } = body;
 
-    if (!title || !slug || !content) {
+    if (status === 'published' && !hasPermission(admin.role, 'content', 'publish')) {
+      return NextResponse.json({ error: 'You do not have permission to publish posts' }, { status: 403 });
+    }
+
+    if (typeof title !== 'string' || typeof slug !== 'string' || typeof content !== 'string' ||
+        !title.trim() || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || !content.trim()) {
       return NextResponse.json({ error: 'Title, slug, and content are required' }, { status: 400 });
     }
 
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
-    const publishedAt = status === 'published' ? now : null;
+    const normalizedStatus = status === 'published' ? 'published' : 'draft';
+    const publishedAt = normalizedStatus === 'published' ? now : null;
 
     await d1Query(
       `INSERT INTO blogs (
@@ -80,7 +91,7 @@ export async function POST(request: NextRequest) {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`,
       [
         id, title, slug, author || 'Admin', authorId || null, categoryId || null, categoryName || null,
-        tags ? JSON.stringify(tags) : '[]', excerpt || null, content, featuredImage || null, status || 'draft',
+        tags ? JSON.stringify(tags) : '[]', excerpt || null, content, featuredImage || null, normalizedStatus,
         seoTitle || null, seoDescription || null, publishedAt,
         now, now
       ]

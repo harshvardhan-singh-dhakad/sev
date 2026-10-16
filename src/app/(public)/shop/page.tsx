@@ -6,11 +6,13 @@ import PublicLayout from '@/components/layout/PublicLayout';
 import { listCategories, listProducts, SortOption, SpiceLevel } from '@/lib/catalog';
 import { ShopProductCard } from '@/components/shop/ShopProductCard';
 import { ShopFilters } from '@/components/shop/ShopFilters';
+import { absoluteUrl } from '@/lib/site-url';
 
 export const metadata: Metadata = {
   title: 'Shop Premium Sev & Namkeen | Rasvat Authentic Snacks',
   description:
     'Explore our signature collection of authentic Indori Sev, Ratlami Sev, Nylon Sev, and royal namkeen. Handcrafted in cold-pressed oil with pure stone-ground besan.',
+  alternates: { canonical: absoluteUrl('/shop') },
 };
 
 interface ShopPageProps {

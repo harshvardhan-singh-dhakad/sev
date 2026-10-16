@@ -84,7 +84,6 @@ export async function generateOrderNumber(): Promise<string> {
   const randomSuffix = Math.floor(10000 + Math.random() * 90000);
   return `RSV-${yearMonth}-${randomSuffix}`;
 }
-
 /**
  * Generates an unguessable 32-byte cryptographic public token for customer order URLs.
  */
@@ -365,6 +364,13 @@ export async function markOrderPaid(params: MarkOrderPaidInput): Promise<MarkOrd
 
   if (!order) {
     throw new Error(`Order not found for markOrderPaid: id=${orderId}, rzp=${razorpayOrderId}`);
+  }
+
+  if (!razorpayOrderId || order.razorpay_order_id !== razorpayOrderId) {
+    throw new Error('Razorpay order ID does not match the order record.');
+  }
+  if (!Number.isInteger(payment.amount) || payment.amount !== order.total) {
+    throw new Error('Captured payment amount does not match the order total.');
   }
 
   // 2. Idempotency Check: Already paid/confirmed
@@ -896,7 +902,8 @@ export async function recordWebhookEvent(
   );
 
   if (existing) {
-    return { isDuplicate: true, event: existing };
+    const completed = existing.status === 'processed' || existing.status === 'ignored';
+    return { isDuplicate: completed, event: existing };
   }
 
   const id = crypto.randomUUID();
@@ -979,5 +986,3 @@ export async function listOrders(filters: OrderListFilters = {}): Promise<OrderL
     totalPages: Math.ceil(total / limit) || 1,
   };
 }
-
-export * from './reconciliation';

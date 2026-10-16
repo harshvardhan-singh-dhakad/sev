@@ -1,6 +1,9 @@
 # Cloudflare Workers / Wrangler local secrets (.dev.vars)
 # These should NEVER be committed to Git.
+# Use matching credentials from one Razorpay mode (test or live).
+# Set RAZORPAY_MOCK_MODE=true only for local development without Razorpay credentials.
 
 RAZORPAY_KEY_ID=rzp_test_YourTestKeyIdHere
 RAZORPAY_KEY_SECRET=YourTestKeySecretHere
 RAZORPAY_WEBHOOK_SECRET=YourWebhookSecretHere
+RAZORPAY_MOCK_MODE=false
