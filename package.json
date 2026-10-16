@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run build:worker",
+    "build:next": "next build",
     "build:worker": "node scripts/patch-opennext.js && npx opennextjs-cloudflare build",
     "preview": "npx wrangler dev",
     "deploy": "node scripts/patch-opennext.js && npx opennextjs-cloudflare build && npx wrangler deploy",
