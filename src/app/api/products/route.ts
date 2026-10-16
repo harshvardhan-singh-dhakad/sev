@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { d1Query } from '@/lib/d1';
+import { d1Batch, d1Query } from '@/lib/d1';
 import { getAuthenticatedAdmin } from '@/lib/auth/session';
 import { hasPermission } from '@/lib/auth/permissions';
 
@@ -26,7 +26,12 @@ export async function GET(request: NextRequest) {
     const conditions: string[] = [];
     const params: (string | number | boolean | null)[] = [];
 
-    if (status) { conditions.push('p.status = ?'); params.push(status); }
+    if (status === 'active') {
+      conditions.push("p.status IN ('active', 'published')");
+    } else if (status) {
+      conditions.push('p.status = ?');
+      params.push(status);
+    }
     if (categoryId) { conditions.push('p.category_id = ?'); params.push(categoryId); }
     if (categorySlug) {
       conditions.push('pc.slug = ?');
@@ -52,7 +57,7 @@ export async function GET(request: NextRequest) {
 
     const productsResult = await d1Query(
       `SELECT p.*, pc.name as category_name, pc.slug as category_slug,
-              MIN(pv.price) as min_price
+              MIN(COALESCE(pv.price, pv.price_paise)) as min_price
        FROM products p
        LEFT JOIN product_categories pc ON p.category_id = pc.id
        LEFT JOIN product_variants pv ON p.id = pv.product_id AND pv.status = 'active'
@@ -86,7 +91,7 @@ export async function GET(request: NextRequest) {
       longDescription: row.long_description,
       images: row.images ? JSON.parse(row.images as string) : [],
       thumbnail: row.thumbnail,
-      status: row.status,
+      status: row.status === 'published' ? 'active' : row.status,
       featured: Boolean(row.featured),
       bestSeller: Boolean(row.best_seller),
       isNew: Boolean(row.is_new),
@@ -106,9 +111,9 @@ export async function GET(request: NextRequest) {
           weight: v.weight,
           weightGrams: v.weight_grams,
           sku: v.sku,
-          price: v.price,
+          price: v.price ?? v.price_paise,
           compareAtPrice: v.compare_at_price,
-          stock: v.stock,
+          stock: v.stock ?? v.stock_qty,
           lowStockThreshold: v.low_stock_threshold,
           image: v.image,
           status: v.status,
@@ -132,11 +137,11 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
-      name, slug, categoryId, shortDescription, longDescription,
+      name, slug, categoryId, categorySlug, shortDescription, longDescription,
       images, thumbnail, ingredients, tasteProfile, texture,
       shelfLife, storageInstructions, packagingInfo, gstRate, hsn,
       status, featured, bestSeller, isNew, recommended,
-      seoTitle, seoDescription, seoKeywords, ogImage,
+      seoTitle, seoDescription, seoKeywords, ogImage, spiceLevel, storage, vegMark, variants,
     } = body;
 
     if (status === 'active' && !hasPermission(admin.role, 'catalog', 'publish')) {
@@ -146,30 +151,56 @@ export async function POST(request: NextRequest) {
     if (typeof name !== 'string' || typeof slug !== 'string' || !name.trim() || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
       return NextResponse.json({ error: 'Name and slug are required' }, { status: 400 });
     }
+    if (!Array.isArray(variants) || variants.length === 0 || variants.length > 10 || variants.some((variant) =>
+      !variant || typeof variant.label !== 'string' || !Number.isInteger(variant.weightGrams) || variant.weightGrams <= 0 ||
+      !Number.isInteger(variant.pricePaise) || variant.pricePaise <= 0 || typeof variant.sku !== 'string' || !variant.sku.trim()
+    )) {
+      return NextResponse.json({ error: 'Add valid packs with a label, weight, price, and SKU.' }, { status: 400 });
+    }
 
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
+    let resolvedCategorySlug = typeof categorySlug === 'string' ? categorySlug : '';
+    if (categoryId) {
+      const category = await d1Query<{ slug: string }>('SELECT slug FROM product_categories WHERE id = ? LIMIT 1', [String(categoryId)]);
+      resolvedCategorySlug = category.results[0]?.slug || resolvedCategorySlug;
+    }
+    if (!resolvedCategorySlug) return NextResponse.json({ error: 'Choose a category for this product.' }, { status: 400 });
 
-    await d1Query(
-      `INSERT INTO products (
-        id, name, slug, category_id, short_description, long_description,
-        images, thumbnail, ingredients, taste_profile, texture,
-        shelf_life, storage_instructions, packaging_info, gst_rate, hsn,
-        status, featured, best_seller, is_new, recommended,
-        seo_title, seo_description, seo_keywords, og_image,
-        created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id, name, slug, categoryId || null, shortDescription || null, longDescription || null,
-        images ? JSON.stringify(images) : '[]', thumbnail || null,
-        ingredients || null, tasteProfile || null, texture || null,
-        shelfLife || null, storageInstructions || null, packagingInfo || null,
-        gstRate || 18, hsn || null,
-        status || 'draft', featured ? 1 : 0, bestSeller ? 1 : 0, isNew ? 1 : 0, recommended ? 1 : 0,
-        seoTitle || null, seoDescription || null, seoKeywords || null, ogImage || null,
-        now, now,
-      ]
-    );
+    const productImages = Array.isArray(images) ? images : [];
+    const productStatus = status === 'active' ? 'published' : status || 'draft';
+    const statements = [{
+      sql: `INSERT INTO products (
+        id, name, slug, category_slug, short_description, description, spice_level, storage,
+        veg_mark, country_of_origin, status, featured, sort_order, category_id, long_description,
+        images, thumbnail, ingredients, taste_profile, texture, storage_instructions, packaging_info,
+        gst_rate, hsn, best_seller, is_new, recommended, seo_title, seo_description, seo_keywords,
+        og_image, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'India', ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      params: [
+        id, name, slug, resolvedCategorySlug, shortDescription || '', longDescription || '', spiceLevel || 'mild',
+        storage || storageInstructions || '', vegMark || 'veg', productStatus, featured ? 1 : 0, categoryId || null,
+        longDescription || '', JSON.stringify(productImages), thumbnail || productImages[0]?.src || null,
+        ingredients || null, tasteProfile || null, texture || null, storageInstructions || storage || '',
+        packagingInfo || null, gstRate || 5, hsn || null, bestSeller ? 1 : 0, isNew ? 1 : 0,
+        recommended ? 1 : 0, seoTitle || null, seoDescription || null, seoKeywords || null, ogImage || null, now, now,
+      ],
+    }];
+    for (const [index, variant] of variants.entries()) {
+      const variantId = crypto.randomUUID();
+      const weight = Number(variant.weightGrams);
+      const price = Number(variant.pricePaise);
+      const stock = variant.stock === '' || variant.stock == null ? null : Number(variant.stock);
+      statements.push({
+        sql: `INSERT INTO product_variants (
+          id, product_id, label, weight_grams, price_paise, sku, stock_qty, min_qty, max_qty,
+          step, is_active, sort_order, created_at, updated_at, name, weight, price, stock, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, NULL, 1, 1, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+        params: [variantId, id, variant.label, weight, price, variant.sku.trim(), stock, index, now, now,
+          variant.label, variant.label, price, stock],
+      });
+    }
+    await d1Batch(statements);
 
     return NextResponse.json({ success: true, id }, { status: 201 });
   } catch (error) {

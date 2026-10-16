@@ -1,13 +1,11 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import PublicLayout from '@/components/layout/PublicLayout';
-import {
-  getProductBySlug,
-  getRelatedProducts,
-  getStoreSettings,
-} from '@/lib/catalog';
+import { getStoreSettings } from '@/lib/catalog';
+import { getRelatedStorefrontProducts, getStorefrontProduct } from '@/lib/storefront-catalog';
 import { ProductDetailClient } from '@/components/pdp/ProductDetailClient';
 import { absoluteUrl } from '@/lib/site-url';
+import { connection } from 'next/server';
 
 interface ProductPageProps {
   params: Promise<{
@@ -21,8 +19,9 @@ interface ProductPageProps {
 export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
+  await connection();
   const { slug } = await params;
-  const product = getProductBySlug(slug, false);
+  const product = await getStorefrontProduct(slug).catch(() => null);
 
   if (!product || product.status !== 'active') {
     return {
@@ -58,16 +57,17 @@ export default async function ProductDetailPage({
   params,
   searchParams,
 }: ProductPageProps) {
+  await connection();
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
 
-  const product = getProductBySlug(slug, false);
+  const product = await getStorefrontProduct(slug).catch(() => null);
 
   if (!product || product.status !== 'active') {
     notFound();
   }
 
-  const relatedProducts = getRelatedProducts(product.slug, product.category, 4);
+  const relatedProducts = await getRelatedStorefrontProducts(product.slug, product.category, 4).catch(() => []);
   const settings = getStoreSettings();
 
   // Primary image

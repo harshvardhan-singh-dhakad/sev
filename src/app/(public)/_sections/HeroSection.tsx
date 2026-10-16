@@ -177,11 +177,11 @@ export function HeroSection() {
           </div>
 
           {/* Visual side */}
-          <div className="flex items-center justify-center mt-8 lg:mt-0 relative px-4">
-            <div className="relative w-full max-w-md mx-auto aspect-square rounded-full">
+          <div className="flex items-center justify-center mt-8 lg:mt-0 relative px-2 sm:px-4">
+            <div className="relative w-full max-w-lg mx-auto aspect-[4/3] rounded-3xl">
               {/* Main product image container */}
               <div
-                className="relative w-full h-full rounded-full overflow-hidden shadow-2xl z-10"
+                className="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl z-10"
                 style={{
                   border: '8px solid white',
                   boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
@@ -190,13 +190,13 @@ export function HeroSection() {
                 <img
                   src="/hero-sev.jpg"
                   alt="Premium Bowl of Sev"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-center"
                 />
               </div>
 
               {/* Background decorative blob */}
               <div
-                className="absolute inset-0 rounded-full z-0 transform translate-x-4 translate-y-4"
+                className="absolute inset-0 rounded-3xl z-0 transform translate-x-3 translate-y-3"
                 style={{ background: 'var(--color-primary-faint)' }}
               />
 

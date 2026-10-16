@@ -1,13 +1,15 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { listProducts } from '@/lib/catalog';
+import { listStorefrontProducts } from '@/lib/storefront-catalog';
+import { connection } from 'next/server';
 import { ShopProductCard } from '@/components/shop/ShopProductCard';
 
 export async function BestSellersSection() {
-  const featured = listProducts({ featured: true, status: 'active' }, 'popular', 1, 8).products;
-  const products = featured.length
-    ? featured
-    : listProducts({ status: 'active' }, 'popular', 1, 8).products;
+  await connection();
+  const featured = await listStorefrontProducts({ featured: true }, 'popular', 1, 8);
+  const products = featured.products.length
+    ? featured.products
+    : (await listStorefrontProducts({}, 'popular', 1, 8)).products;
 
   return (
     <section className="section" style={{ background: 'var(--color-bg)' }} aria-labelledby="bestsellers-heading">

@@ -1,8 +1,8 @@
 import type { MetadataRoute } from 'next';
-import { listProducts } from '@/lib/catalog';
 import { absoluteUrl } from '@/lib/site-url';
 import { connection } from 'next/server';
 import { getPublishedBlogs } from '@/lib/blogs';
+import { listStorefrontProducts } from '@/lib/storefront-catalog';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   await connection();
@@ -10,7 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/', '/shop', '/about', '/bulk-orders', '/samples', '/contact', '/blog',
     '/shipping-policy', '/refund-policy', '/privacy-policy', '/terms',
   ];
-  const products = listProducts({}, 'popular', 1, 100).products;
+  const products = (await listStorefrontProducts({}, 'popular', 1, 100).catch(() => ({ products: [] }))).products;
   const blogs = await getPublishedBlogs(100).catch(() => []);
 
   return [

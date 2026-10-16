@@ -12,29 +12,25 @@ import {
   Package,
 } from 'lucide-react';
 import { ProductCategory } from '@/lib/types';
-
-const DEMO_CATEGORIES: ProductCategory[] = [
-  { id: '1', name: 'Indori Sev', slug: 'indori-sev', description: 'Classic Indore-style crispy sev', displayOrder: 1, status: 'active', createdAt: '', updatedAt: '', productCount: 6 },
-  { id: '2', name: 'Ratlami Sev', slug: 'ratlami-sev', description: 'Spicy Ratlami specialty', displayOrder: 2, status: 'active', createdAt: '', updatedAt: '', productCount: 4 },
-  { id: '3', name: 'Nylon Sev', slug: 'nylon-sev', description: 'Super thin & delicate', displayOrder: 3, status: 'active', createdAt: '', updatedAt: '', productCount: 5 },
-  { id: '4', name: 'Plain Sev', slug: 'plain-sev', description: 'Simple & versatile', displayOrder: 4, status: 'active', createdAt: '', updatedAt: '', productCount: 3 },
-  { id: '5', name: 'Tikha Sev', slug: 'tikha-sev', description: 'Extra spicy & fiery', displayOrder: 5, status: 'active', createdAt: '', updatedAt: '', productCount: 4 },
-  { id: '6', name: 'Garlic Sev', slug: 'garlic-sev', description: 'Bold garlic flavor', displayOrder: 6, status: 'active', createdAt: '', updatedAt: '', productCount: 3 },
-  { id: '7', name: 'Premium Sev', slug: 'premium-sev', description: 'Signature premium blends', displayOrder: 7, status: 'active', createdAt: '', updatedAt: '', productCount: 5 },
-  { id: '8', name: 'Special Sev', slug: 'special-sev', description: 'Seasonal & limited edition', displayOrder: 8, status: 'active', createdAt: '', updatedAt: '', productCount: 2 },
-];
+import { getStorefrontCategories } from '@/lib/storefront-catalog';
+import { connection } from 'next/server';
 
 async function getCategories(): Promise<ProductCategory[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/categories?status=active`, {
-      next: { revalidate: 300 },
-    });
-    if (!res.ok) return DEMO_CATEGORIES;
-    const data = await res.json();
-    return data.categories?.length ? data.categories : DEMO_CATEGORIES;
+    const categories = await getStorefrontCategories();
+    return categories.map((category) => ({
+      id: category.slug,
+      name: category.name,
+      slug: category.slug,
+      description: category.description,
+      displayOrder: category.display_order,
+      status: category.status,
+      image: category.image,
+      createdAt: '',
+      updatedAt: '',
+    }));
   } catch {
-    return DEMO_CATEGORIES;
+    return [];
   }
 }
 
@@ -53,6 +49,7 @@ const CATEGORY_ICONS: Record<
 };
 
 export async function CategorySection() {
+  await connection();
   const categories = await getCategories();
 
   return (
@@ -173,7 +170,7 @@ export async function CategorySection() {
               textWrap: 'balance',
             }}
           >
-            From classic to exotic — find the perfect Sev for every occasion
+            Browse the available product categories.
           </p>
         </div>
 
@@ -184,8 +181,7 @@ export async function CategorySection() {
         >
           {categories.slice(0, 8).map((cat) => {
             const Icon = CATEGORY_ICONS[cat.slug] || Package;
-            const countText =
-              cat.productCount === 1 ? '1 product' : `${cat.productCount ?? 0} products`;
+            const countText = 'Explore products';
 
             return (
               <Link
@@ -255,6 +251,12 @@ export async function CategorySection() {
             );
           })}
         </div>
+
+        {categories.length === 0 && (
+          <p className="text-center text-sm text-gray-600">
+            Categories will appear here when they are added to the store catalog.
+          </p>
+        )}
 
         {/* Centered CTA */}
         <div className="flex justify-center" style={{ marginTop: '40px' }}>

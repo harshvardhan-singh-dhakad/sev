@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useCallback, useState } from 'react';
-import { SlidersHorizontal, X, Check, Flame, RotateCcw } from 'lucide-react';
+import { SlidersHorizontal, X, Flame, RotateCcw } from 'lucide-react';
 import { Category } from '@/lib/catalog';
 
 interface ShopFiltersProps {
@@ -45,7 +45,7 @@ export function ShopFilters({ categories, totalCount }: ShopFiltersProps) {
   return (
     <>
       {/* Category Chips Bar (Horizontal Scroll / Wrap) */}
-      <div className="mb-6 flex items-center justify-between gap-3 flex-wrap">
+      <div className="mb-6 flex items-center justify-between gap-3 flex-wrap lg:hidden">
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none w-full sm:w-auto">
           <button
             type="button"
@@ -256,46 +256,6 @@ export function ShopFilters({ categories, totalCount }: ShopFiltersProps) {
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 space-y-6">
-              {/* Category */}
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">
-                  Categories
-                </h3>
-                <div className="space-y-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      updateParam('category', 'all');
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-between ${
-                      currentCategory === 'all'
-                        ? 'bg-primary-faint text-primary-dark font-bold'
-                        : 'text-gray-700 bg-gray-50'
-                    }`}
-                  >
-                    <span>All Varieties</span>
-                    {currentCategory === 'all' && <Check size={14} />}
-                  </button>
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.slug}
-                      type="button"
-                      onClick={() => {
-                        updateParam('category', cat.slug);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-between ${
-                        currentCategory === cat.slug
-                          ? 'bg-primary-faint text-primary-dark font-bold'
-                          : 'text-gray-700 bg-gray-50'
-                      }`}
-                    >
-                      <span>{cat.name}</span>
-                      {currentCategory === cat.slug && <Check size={14} />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Spice */}
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 flex items-center gap-1.5">

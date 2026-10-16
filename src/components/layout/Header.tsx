@@ -30,7 +30,7 @@ const SHOP_DROPDOWN_LINKS = [
 
 export function Header() {
   const pathname = usePathname();
-  const { getItemCount, openCart } = useCartStore();
+  const { items, openCart } = useCartStore();
   const { user } = useAuthStore();
 
   const [scrolled, setScrolled] = useState(false);
@@ -38,18 +38,13 @@ export function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
   const [mobileShopOpen, setMobileShopOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
+  const cartCount = items.reduce((count, item) => count + item.quantity, 0);
 
   const shopDropdownRef = useRef<HTMLDivElement>(null);
   const shopTriggerRef = useRef<HTMLAnchorElement>(null);
   const shopItemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const drawerRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-
-  // Sync cart count
-  useEffect(() => {
-    setCartCount(getItemCount());
-  }, [getItemCount]);
 
   // Scroll detection: shadow only, height must NOT change
   useEffect(() => {

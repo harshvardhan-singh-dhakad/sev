@@ -3,7 +3,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ChevronRight, Sparkles, PackageOpen } from 'lucide-react';
 import PublicLayout from '@/components/layout/PublicLayout';
-import { listCategories, listProducts, SortOption, SpiceLevel } from '@/lib/catalog';
+import type { SpiceLevel } from '@/lib/catalog';
+import { getStorefrontCategories, listStorefrontProducts, type StorefrontSort } from '@/lib/storefront-catalog';
 import { ShopProductCard } from '@/components/shop/ShopProductCard';
 import { ShopFilters } from '@/components/shop/ShopFilters';
 import { absoluteUrl } from '@/lib/site-url';
@@ -29,22 +30,25 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const resolvedParams = await searchParams;
 
   const currentCategory = resolvedParams.category || 'all';
-  const currentSort = (resolvedParams.sort as SortOption) || 'popular';
+  const currentSort = (resolvedParams.sort as StorefrontSort) || 'popular';
   const currentSpice = (resolvedParams.spice as SpiceLevel) || null;
   const searchQuery = resolvedParams.q || null;
   const currentPage = parseInt(resolvedParams.page || '1', 10) || 1;
 
-  const categories = listCategories();
-  const { products, total, totalPages, page } = listProducts(
-    {
-      category: currentCategory === 'all' ? null : currentCategory,
-      spice_level: currentSpice,
-      search: searchQuery,
-    },
-    currentSort,
-    currentPage,
-    12
-  );
+  const [categories, catalog] = await Promise.all([
+    getStorefrontCategories(),
+    listStorefrontProducts(
+      {
+        category: currentCategory === 'all' ? null : currentCategory,
+        spice_level: currentSpice,
+        search: searchQuery,
+      },
+      currentSort,
+      currentPage,
+      12,
+    ),
+  ]);
+  const { products, total, totalPages, page } = catalog;
 
   return (
     <PublicLayout>
@@ -90,7 +94,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                 Shop Premium Sev
               </h1>
               <p className="text-sm sm:text-base text-gray-600 max-w-xl">
-                Authentic central Indian recipes, hand-pressed and slow-fried in pure cold-pressed oil with stone-ground gram flour.
+                Explore the products currently available in our catalog.
               </p>
             </div>
 
