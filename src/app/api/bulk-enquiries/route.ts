@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { d1Query } from '@/lib/d1';
+import { getAuthenticatedAdmin } from '@/lib/auth/session';
+import { assertPermission } from '@/lib/auth/permissions';
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,16 +41,14 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // Admin auth check
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const admin = await getAuthenticatedAdmin();
+    if (!admin) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+    assertPermission(admin.role, 'enquiries', 'view');
 
     const result = await d1Query(
-      `SELECT * FROM bulk_enquiries ORDER BY created_at DESC`
+      `SELECT * FROM bulk_enquiries ORDER BY created_at DESC LIMIT 250`
     );
 
     const enquiries = result.results.map((row: Record<string, unknown>) => ({
@@ -71,7 +71,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ enquiries });
   } catch (error) {
+    if ((error as { status?: number })?.status === 403) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     console.error('GET /api/bulk-enquiries error:', error);
-    return NextResponse.json({ enquiries: [] });
+    return NextResponse.json({ error: 'Failed to load enquiries' }, { status: 500 });
   }
 }

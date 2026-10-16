@@ -40,8 +40,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ categories });
   } catch (error) {
     console.error('GET /api/categories error:', error);
-    // Return empty array on DB not configured yet
-    return NextResponse.json({ categories: [] });
+    return NextResponse.json({ error: 'Categories could not be loaded. Check the database connection and migrations.' }, { status: 500 });
   }
 }
 

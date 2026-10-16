@@ -108,18 +108,16 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       </section>
 
       {/* Main Catalog Viewport */}
-      <section className="py-10 bg-bg min-h-[60vh]">
+      <section className="py-5 sm:py-8 lg:py-10 bg-bg min-h-[60vh]">
         <div className="container-site">
-          {/* Category Chips & Mobile Controls */}
-          <Suspense fallback={null}>
-            <ShopFilters categories={categories} totalCount={total} />
-          </Suspense>
-
-          <div className="flex items-start gap-8">
-            {/* Desktop Sidebar is inside ShopFilters */}
+          <div className="grid grid-cols-1 lg:grid-cols-[16rem_minmax(0,1fr)] items-start gap-4 sm:gap-6 lg:gap-8">
+            {/* Mobile controls stack above results; the desktop sidebar occupies column one. */}
+            <Suspense fallback={null}>
+              <ShopFilters categories={categories} totalCount={total} />
+            </Suspense>
 
             {/* Product Grid Area */}
-            <main className="flex-1 min-w-0" id="main-content">
+            <main className="min-w-0 w-full" id="main-content">
               {products.length === 0 ? (
                 /* Empty State */
                 <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-2xl bg-white border border-border shadow-sm">
@@ -145,7 +143,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
               ) : (
                 <>
                   {/* Grid 4 / 3 / 2 columns (Desktop >=1280px: 4 cols, Tablet >=768px: 3 cols, Mobile: 2 cols) */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
                     {products.map((product) => (
                       <ShopProductCard key={product.slug} product={product} />
                     ))}

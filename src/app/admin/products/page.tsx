@@ -66,7 +66,7 @@ export default function AdminProductsPage() {
               const min = prices.length ? Math.min(...prices) / 100 : null;
               const max = prices.length ? Math.max(...prices) / 100 : null;
               return <tr key={product.id}>
-                <td className="px-5 py-4"><p className="font-semibold text-slate-900">{product.name}</p><p className="text-xs text-slate-500">/{product.slug}</p></td>
+                <td className="px-5 py-4"><Link href={`/admin/products/${encodeURIComponent(product.id)}/edit`} className="font-semibold text-slate-900 hover:text-primary hover:underline">{product.name}</Link><p className="text-xs text-slate-500">/{product.slug}</p></td>
                 <td className="px-5 py-4 text-slate-600">{product.categoryName || 'Uncategorized'}</td>
                 <td className="px-5 py-4 text-slate-700">{min === null ? 'No active pack' : min === max ? `₹${min.toFixed(2)}` : `₹${min.toFixed(2)} – ₹${max?.toFixed(2)}`}</td>
                 <td className="px-5 py-4"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold capitalize text-slate-700">{product.status}</span></td>

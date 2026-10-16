@@ -72,7 +72,7 @@ function CustomerLoginForm() {
           return;
         }
         const u = await signUpWithEmail(email, password, name.trim());
-        toast.success(`Account created! Welcome, ${u.displayName || u.email}!`);
+        toast.success(`Account created! Check your email to verify your address, ${u.displayName || u.email}.`);
         router.push(redirectUrl);
       } else if (mode === 'forgot') {
         await resetPassword(email);

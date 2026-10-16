@@ -12,9 +12,9 @@ import {
   Users,
   Briefcase,
   Gift,
-  Mail,
   FileText,
   Image as ImageIcon,
+  GalleryVerticalEnd,
   Settings as SettingsIcon,
   Shield,
   History,
@@ -23,7 +23,6 @@ import {
   LogOut,
   ExternalLink,
   ChevronRight,
-  Sparkles,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Role } from '@/lib/auth/permissions';
@@ -72,14 +71,13 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Bulk Enquiries', href: '/admin/bulk-enquiries', icon: Briefcase },
       { label: 'Sample Requests', href: '/admin/samples', icon: Gift },
-      { label: 'Contact Messages', href: '/admin/contact-messages', icon: Mail },
-      { label: 'Subscribers', href: '/admin/subscribers', icon: Sparkles },
     ],
   },
   {
     group: 'Content & Media',
     items: [
       { label: 'Blog Posts', href: '/admin/blog', icon: FileText },
+      { label: 'Homepage Banners', href: '/admin/banners', icon: GalleryVerticalEnd },
       { label: 'Media Library', href: '/admin/media', icon: ImageIcon },
     ],
   },

@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ blogs });
   } catch (error) {
     console.error('GET /api/blogs error:', error);
-    return NextResponse.json({ blogs: [] });
+    return NextResponse.json({ error: 'Blog posts could not be loaded. Check the database connection and migrations.' }, { status: 500 });
   }
 }
 

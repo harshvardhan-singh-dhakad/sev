@@ -8,6 +8,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
+  sendEmailVerification,
   sendPasswordResetEmail,
   signOut as firebaseSignOut,
   User,
@@ -78,6 +79,7 @@ export async function signUpWithEmail(
   if (displayName && credential.user) {
     await updateProfile(credential.user, { displayName });
   }
+  await sendEmailVerification(credential.user);
   return credential.user;
 }
 

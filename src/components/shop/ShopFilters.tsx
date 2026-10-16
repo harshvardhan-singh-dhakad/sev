@@ -45,7 +45,7 @@ export function ShopFilters({ categories, totalCount }: ShopFiltersProps) {
   return (
     <>
       {/* Category Chips Bar (Horizontal Scroll / Wrap) */}
-      <div className="mb-6 flex items-center justify-between gap-3 flex-wrap lg:hidden">
+      <div className="mb-1 flex items-center justify-between gap-3 flex-wrap lg:hidden">
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none w-full sm:w-auto">
           <button
             type="button"
@@ -86,11 +86,11 @@ export function ShopFilters({ categories, totalCount }: ShopFiltersProps) {
       </div>
 
       {/* Mobile Bar: Filter Drawer Trigger + Sort */}
-      <div className="lg:hidden flex items-center justify-between gap-3 mb-6 p-3 rounded-xl bg-white border border-border shadow-sm">
+      <div className="lg:hidden flex items-center justify-between gap-3 p-3 rounded-xl bg-white border border-border shadow-sm">
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold text-gray-800 bg-gray-50 border border-border"
+          className="inline-flex min-h-10 items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold text-gray-800 bg-gray-50 border border-border"
         >
           <SlidersHorizontal size={14} />
           <span>Filters</span>
@@ -107,7 +107,7 @@ export function ShopFilters({ categories, totalCount }: ShopFiltersProps) {
             id="mobile-sort-select"
             value={currentSort}
             onChange={(e) => updateParam('sort', e.target.value)}
-            className="text-xs font-semibold py-1.5 px-2 rounded-lg bg-gray-50 border border-border text-gray-800 focus:ring-primary focus:outline-none"
+            className="min-h-10 max-w-[62%] text-xs font-semibold py-1.5 px-2 rounded-lg bg-gray-50 border border-border text-gray-800 focus:ring-primary focus:outline-none"
           >
             <option value="popular">Popular</option>
             <option value="price_asc">Price: Low to High</option>
@@ -256,6 +256,33 @@ export function ShopFilters({ categories, totalCount }: ShopFiltersProps) {
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 space-y-6">
+              {/* Categories */}
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">
+                  Categories
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { name: 'All varieties', slug: 'all' },
+                    ...categories.map((category) => ({ name: category.name, slug: category.slug })),
+                  ].map((category) => (
+                    <button
+                      key={category.slug}
+                      type="button"
+                      onClick={() => updateParam('category', category.slug)}
+                      aria-pressed={currentCategory === category.slug}
+                      className={`min-h-10 px-3 py-2 rounded-lg text-xs font-semibold text-center border ${
+                        currentCategory === category.slug
+                          ? 'bg-primary text-white border-primary'
+                          : 'bg-gray-50 text-gray-700 border-border'
+                      }`}
+                    >
+                      {category.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Spice */}
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 flex items-center gap-1.5">

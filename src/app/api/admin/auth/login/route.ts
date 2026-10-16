@@ -15,12 +15,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, password } = body;
 
-    if (!email || !password) {
+    if (typeof email !== 'string' || typeof password !== 'string' || !email.trim() || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
+    if (email.length > 254 || password.length > 1024) {
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 400 });
+    }
 
-    const cleanEmail = String(email).toLowerCase().trim();
-    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+    const cleanEmail = email.toLowerCase().trim();
+    // Cloudflare sets this at the edge. Do not trust client-controlled X-Forwarded-For
+    // for login throttling because an attacker can rotate that value per request.
+    const ip = request.headers.get('cf-connecting-ip') || 'unknown';
     const rateLimitKey = `${ip}:${cleanEmail}`;
 
     // 1. Check Rate Limit

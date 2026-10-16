@@ -119,7 +119,7 @@ export function ShopProductCard({ product, className = '' }: ShopProductCardProp
       </div>
 
       {/* Content Block */}
-      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
+      <div className="p-3 sm:p-5 flex-1 flex flex-col justify-between">
         <div>
           {/* Category Pill */}
           <div className="flex items-center justify-between mb-1.5">
@@ -133,7 +133,7 @@ export function ShopProductCard({ product, className = '' }: ShopProductCardProp
 
           {/* Product Name */}
           <h2
-            className="font-bold text-base sm:text-lg mb-1 leading-snug transition-colors group-hover:text-primary"
+            className="font-bold text-sm sm:text-lg mb-1 leading-snug transition-colors group-hover:text-primary"
             style={{
               fontFamily: 'var(--font-display)',
               color: 'var(--color-ink)',
@@ -155,13 +155,13 @@ export function ShopProductCard({ product, className = '' }: ShopProductCardProp
 
         {/* Pricing & Quick-Add Bar */}
         <div
-          className="pt-3 flex items-center justify-between gap-2"
+          className="pt-3 flex items-center justify-between gap-1.5"
           style={{ borderTop: '1px solid var(--color-border)' }}
         >
           <div>
             <div className="flex items-baseline gap-1.5">
               <span
-                className="font-bold text-base sm:text-lg"
+                className="font-bold text-sm sm:text-lg"
                 style={{
                   fontFamily: 'var(--font-display)',
                   color: 'var(--color-ink)',
@@ -169,7 +169,7 @@ export function ShopProductCard({ product, className = '' }: ShopProductCardProp
               >
                 {formatINR(pricePaise)}
               </span>
-              <span className="text-xs font-medium" style={{ color: 'var(--color-ink-muted)' }}>
+              <span className="text-[10px] sm:text-xs font-medium" style={{ color: 'var(--color-ink-muted)' }}>
                 / {defaultVariant.label}
               </span>
             </div>
@@ -183,7 +183,7 @@ export function ShopProductCard({ product, className = '' }: ShopProductCardProp
             type="button"
             onClick={handleQuickAdd}
             aria-label={`Add ${product.name} ${defaultVariant.label} to cart`}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary"
+              className="inline-flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg text-xs font-bold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary"
             style={{
               backgroundColor: 'var(--color-primary-faint)',
               color: 'var(--color-primary-dark)',
