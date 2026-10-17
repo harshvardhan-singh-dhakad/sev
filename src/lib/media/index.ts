@@ -30,12 +30,47 @@ interface R2Bucket {
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
+/**
+ * Resolves the MEDIA R2 bucket binding injected by Cloudflare Workers.
+ *
+ * The binding name "MEDIA" is declared in wrangler.toml under [[r2_buckets]].
+ * If this throws, it almost always means:
+ *   1. The [[r2_buckets]] block was removed from wrangler.toml, OR
+ *   2. The bucket binding was not re-applied after a Cloudflare Pages deploy
+ *      that overwrote the Worker settings.
+ *
+ * Fix: ensure wrangler.toml is the single source of truth and the
+ * [[r2_buckets]] binding block is present before deploying.
+ */
 async function getMediaBucket(): Promise<R2Bucket> {
-  const context = await getCloudflareContext({ async: true });
-  const bucket = (context.env as Record<string, unknown>).MEDIA as R2Bucket | undefined;
-  if (!bucket || typeof bucket.put !== 'function') {
-    throw new Error('Cloudflare R2 binding "MEDIA" is not configured for this Worker.');
+  let context: Awaited<ReturnType<typeof getCloudflareContext>>;
+
+  try {
+    context = await getCloudflareContext({ async: true });
+  } catch (ctxError) {
+    // getCloudflareContext throws outside a Worker request context (e.g. during
+    // static generation or an unexpected edge-runtime path).
+    const message = ctxError instanceof Error ? ctxError.message : String(ctxError);
+    throw Object.assign(
+      new Error(`R2: Failed to obtain Cloudflare request context. ${message}`),
+      { status: 503, code: 'CF_CONTEXT_UNAVAILABLE' }
+    );
   }
+
+  const env = context.env as Record<string, unknown>;
+  const bucket = (env.media ?? env.MEDIA) as R2Bucket | undefined;
+
+  if (!bucket || typeof bucket.put !== 'function') {
+    throw Object.assign(
+      new Error(
+        'R2: Cloudflare binding "media" (or "MEDIA") is missing or invalid. ' +
+        'Ensure [[r2_buckets]] with binding = "media" and bucket_name = "rasvat-media" ' +
+        'exists in wrangler.toml and the Worker was deployed.'
+      ),
+      { status: 503, code: 'R2_BINDING_MISSING' }
+    );
+  }
+
   return bucket;
 }
 
@@ -69,11 +104,13 @@ export async function uploadMedia(file: {
   }
   if (!file.altText.trim()) throw new Error('Alt text is required for accessibility.');
 
+  const bucket = await getMediaBucket();
   const id = crypto.randomUUID();
   const filename = `${id}.${getExtension(mimeType)}`;
   const url = publicMediaUrl(filename);
   const now = new Date().toISOString();
-  await (await getMediaBucket()).put(`uploads/${filename}`, file.bytes, {
+
+  await bucket.put(`uploads/${filename}`, file.bytes, {
     httpMetadata: { contentType: mimeType },
   });
 
@@ -87,7 +124,11 @@ export async function uploadMedia(file: {
     );
   } catch (error) {
     // Avoid an orphan object if the database write fails after R2 accepts the upload.
-    await (await getMediaBucket()).delete(`uploads/${filename}`);
+    try {
+      await bucket.delete(`uploads/${filename}`);
+    } catch (cleanupError) {
+      console.error('R2 cleanup after failed DB insert also failed:', cleanupError);
+    }
     throw error;
   }
 
@@ -134,7 +175,8 @@ export async function deleteMedia(mediaId: string, userId?: string): Promise<voi
   if (Number(media.usage_count || 0) > 0) {
     throw new Error('Cannot delete media currently in use by active products or content');
   }
-  await (await getMediaBucket()).delete(`uploads/${media.filename as string}`);
+  const bucket = await getMediaBucket();
+  await bucket.delete(`uploads/${media.filename as string}`);
   await execute('DELETE FROM media WHERE id = ?', [mediaId]);
   await logAuditEvent({
     userId,
@@ -146,5 +188,13 @@ export async function deleteMedia(mediaId: string, userId?: string): Promise<voi
 }
 
 export async function getMediaObject(filename: string): Promise<R2Object | null> {
-  return (await getMediaBucket()).get(`uploads/${filename}`);
+  try {
+    const bucket = await getMediaBucket();
+    return bucket.get(`uploads/${filename}`);
+  } catch (err) {
+    // If R2 binding is unavailable, return null so the caller can respond with 404/503
+    // rather than crashing the Worker (which would produce Cloudflare Error 1101).
+    console.error('[media] R2 unavailable for getMediaObject:', err instanceof Error ? err.message : err);
+    return null;
+  }
 }

@@ -13,8 +13,13 @@ export async function GET(_request: Request, context: { params: Promise<{ filena
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    // R2 binding missing → return 503 so Cloudflare does NOT throw Error 1101
+    if (error.code === 'R2_BINDING_MISSING' || error.code === 'CF_CONTEXT_UNAVAILABLE' || error.status === 503) {
+      console.error('GET /api/media/[filename] – R2 binding unavailable:', error.message);
+      return new Response('Media storage is temporarily unavailable.', { status: 503 });
+    }
     console.error('GET /api/media/[filename] error:', error);
-    return new Response(null, { status: 503 });
+    return new Response(null, { status: 500 });
   }
 }

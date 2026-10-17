@@ -41,13 +41,35 @@ export interface SqlStatement {
 /**
  * Gets the D1 binding injected into the Worker by Wrangler.
  * A Worker must use this binding instead of the Cloudflare REST API.
+ *
+ * Throws a structured error with `status: 503` and `code: 'D1_BINDING_MISSING'`
+ * so API routes can return an appropriate HTTP response instead of crashing
+ * the Worker with an unhandled exception (Error 1101 / HTTP 500).
  */
 async function getD1(): Promise<D1Binding> {
-  const context = await getCloudflareContext({ async: true });
+  let context: Awaited<ReturnType<typeof getCloudflareContext>>;
+
+  try {
+    context = await getCloudflareContext({ async: true });
+  } catch (ctxError) {
+    const message = ctxError instanceof Error ? ctxError.message : String(ctxError);
+    throw Object.assign(
+      new Error(`D1: Failed to obtain Cloudflare request context. ${message}`),
+      { status: 503, code: 'CF_CONTEXT_UNAVAILABLE' }
+    );
+  }
+
   const db = (context.env as Record<string, unknown>).DB as D1Binding | undefined;
 
   if (!db || typeof db.prepare !== 'function') {
-    throw new Error('Cloudflare D1 binding "DB" is not configured for this Worker.');
+    throw Object.assign(
+      new Error(
+        'D1: Cloudflare binding "DB" is missing or invalid. ' +
+        'Ensure [[d1_databases]] with binding = "DB" exists in wrangler.toml ' +
+        'and the Worker was (re-)deployed afterwards.'
+      ),
+      { status: 503, code: 'D1_BINDING_MISSING' }
+    );
   }
 
   return db;

@@ -22,6 +22,11 @@ export async function GET(request: NextRequest) {
     if (error.status === 403) {
       return NextResponse.json({ error: error.message }, { status: 403 });
     }
+    // D1 binding missing or Cloudflare context unavailable → 503, not 500
+    if (error.code === 'D1_BINDING_MISSING' || error.code === 'CF_CONTEXT_UNAVAILABLE' || error.status === 503) {
+      console.error('GET /api/admin/media – binding unavailable:', error.message);
+      return NextResponse.json({ error: 'Service temporarily unavailable. Storage binding is not configured.' }, { status: 503 });
+    }
     console.error('GET /api/admin/media error:', error);
     return NextResponse.json({ error: 'Failed to list media' }, { status: 500 });
   }
@@ -57,6 +62,14 @@ export async function POST(request: NextRequest) {
     if (error.status === 403) {
       return NextResponse.json({ error: error.message }, { status: 403 });
     }
+    // R2 binding missing or Cloudflare context unavailable → 503, not 400
+    if (error.code === 'R2_BINDING_MISSING' || error.code === 'CF_CONTEXT_UNAVAILABLE' || error.status === 503) {
+      console.error('POST /api/admin/media R2 unavailable:', error.message);
+      return NextResponse.json(
+        { error: 'Media storage is temporarily unavailable. Please try again later.' },
+        { status: 503 }
+      );
+    }
     console.error('POST /api/admin/media error:', error);
     return NextResponse.json({ error: error.message || 'Failed to upload media' }, { status: 400 });
   }
@@ -83,6 +96,14 @@ export async function DELETE(request: NextRequest) {
   } catch (error: any) {
     if (error.status === 403) {
       return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+    // R2 binding missing or Cloudflare context unavailable → 503, not 400
+    if (error.code === 'R2_BINDING_MISSING' || error.code === 'CF_CONTEXT_UNAVAILABLE' || error.status === 503) {
+      console.error('DELETE /api/admin/media R2 unavailable:', error.message);
+      return NextResponse.json(
+        { error: 'Media storage is temporarily unavailable. Please try again later.' },
+        { status: 503 }
+      );
     }
     console.error('DELETE /api/admin/media error:', error);
     return NextResponse.json({ error: error.message || 'Failed to delete media' }, { status: 400 });

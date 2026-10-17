@@ -1,24 +1,59 @@
+# =============================================================================
+# wrangler.toml — LOCKED CONFIG for Worker "sev" (Next.js + OpenNext on Cloudflare)
+# =============================================================================
+# This file is the SINGLE SOURCE OF TRUTH for all bindings.
+# GitHub auto-deploy (Workers Builds) runs `npx wrangler deploy` which reads
+# THIS file. Any binding NOT listed here will be REMOVED on every push.
+# That is why the R2 binding "media" kept disappearing — it was only set in
+# the dashboard, not in this file.
+#
+# Secrets (secret_text) are NOT defined here — they are managed via:
+#   npx wrangler secret put SECRET_NAME
+# or the dashboard Variables & Secrets page. They persist across deploys.
+# Only structural bindings (R2, D1, assets) must be declared here.
+# =============================================================================
+
 name = "sev"
 main = ".open-next/worker.js"
-compatibility_date = "2026-10-13"
+upload_source_maps = true
+
+# Set to today's date or later. OpenNext requires nodejs_compat and a
+# compatibility_date of 2024-09-23 or later.
+compatibility_date = "2026-03-01"
 compatibility_flags = ["nodejs_compat"]
 
-[build]
-command = "node scripts/patch-opennext.js && npx opennextjs-cloudflare build"
-
+# ---------------------------------------------------------------------------
+# Static Assets (OpenNext output)
+# ---------------------------------------------------------------------------
 [assets]
 directory = ".open-next/assets"
 binding = "ASSETS"
 
+# ---------------------------------------------------------------------------
+# R2 Bucket Binding — THE FIX
+# binding = "media"  →  the variable name used in your code (env.media)
+# bucket_name = "rasvat-media"  →  the actual R2 bucket on your account
+# ---------------------------------------------------------------------------
+# This block ensures the R2 binding survives every GitHub auto-deploy.
+# Without it, `wrangler deploy` strips the binding and your code throws
+# Error 1101 (Worker threw exception) when accessing env.media.
+[[r2_buckets]]
+binding = "media"
+bucket_name = "rasvat-media"
+
+# ---------------------------------------------------------------------------
+# D1 Database Binding
+# binding = "DB"  →  the variable name used in your code (env.DB)
+# database_id  →  your D1 database ID (do not change unless you recreate the DB)
+# ---------------------------------------------------------------------------
 [[d1_databases]]
 binding = "DB"
 database_name = "rasvat-prod-db"
 database_id = "18184346-4f3a-481a-9474-5aff3f6be39b"
 
-[[r2_buckets]]
-binding = "MEDIA"
-bucket_name = "rasvat-media"
-
+# ---------------------------------------------------------------------------
+# Observability (enables Workers Logs for debugging 1101 errors)
+# ---------------------------------------------------------------------------
 [observability]
 enabled = true
 
@@ -35,3 +70,20 @@ persist = true
 
 [observability.issues]
 enabled = true
+
+# ---------------------------------------------------------------------------
+# NOTE: The following secrets are managed via `wrangler secret put` or the
+# dashboard and do NOT need to be listed here. They persist across deploys:
+#   - ADMIN_OWNER_EMAIL
+#   - ADMIN_OWNER_PASSWORD
+#   - NEXT_PUBLIC_FIREBASE_API_KEY
+#   - NEXT_PUBLIC_FIREBASE_APP_ID
+#   - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+#   - NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+#   - NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+#   - NEXT_PUBLIC_FIREBASE_PROJECT_ID
+#   - NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+#   - RAZORPAY_KEY_ID
+#   - RAZORPAY_KEY_SECRET
+#   - RAZORPAY_WEBHOOK_SECRET
+# ---------------------------------------------------------------------------
