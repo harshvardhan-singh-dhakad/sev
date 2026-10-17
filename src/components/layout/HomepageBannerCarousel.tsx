@@ -33,7 +33,7 @@ export function HomepageBannerCarousel({ banners }: { banners: HomepageBanner[] 
 
   return (
     <section aria-label="Offers and announcements" className="container-site py-5 sm:py-7">
-      <div className="relative overflow-hidden rounded-2xl bg-gray-100 shadow-sm aspect-[16/7] sm:aspect-[16/5] lg:aspect-[16/4]">
+      <div className="relative overflow-hidden rounded-2xl bg-gray-100 shadow-sm aspect-[16/9]">
         {activeBanner.linkUrl ? (
           /^https:\/\//i.test(activeBanner.linkUrl) ? (
             <a href={activeBanner.linkUrl} target="_blank" rel="noreferrer" aria-label={activeBanner.title} className="block h-full w-full">

@@ -173,7 +173,7 @@ export default function AdminBannersPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm font-bold text-ink"><Eye size={16} className="text-primary" />Poster preview</div>
-                <div className="relative aspect-[16/8] overflow-hidden rounded-xl border border-border bg-gray-50">
+                <div className="relative aspect-[16/9] overflow-hidden rounded-xl border border-border bg-gray-50">
                   {banner.imageUrl ? <Image src={banner.imageUrl} alt={banner.imageAlt || banner.title || 'Banner poster preview'} fill unoptimized sizes="(max-width: 1024px) 100vw, 40vw" className="object-contain" /> : <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-gray-400"><ImagePlus size={28} />Upload or paste a poster URL</div>}
                 </div>
                 <label className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-bold text-ink hover:bg-gray-50">
