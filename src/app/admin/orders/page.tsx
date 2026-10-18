@@ -20,6 +20,10 @@ import {
   Send,
   AlertCircle,
   Link as LinkIcon,
+  Gift,
+  Printer,
+  Sparkles,
+  Heart,
 } from 'lucide-react';
 
 interface OrderItem {
@@ -61,6 +65,14 @@ interface Order {
   trackingAwb: string;
   trackingUrl: string;
   notes: string;
+  isGift?: boolean;
+  senderName?: string;
+  senderPhone?: string;
+  senderEmail?: string;
+  recipientName?: string;
+  giftMessage?: string;
+  giftFestivalTag?: string;
+  hidePriceSlip?: boolean;
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
@@ -105,6 +117,26 @@ export default function AdminOrdersPage() {
 
   // Copy feedback state
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Festive Greeting Postcard Printable Modal
+  const [cardOrder, setCardOrder] = useState<Order | null>(null);
+
+  function getFestiveTitle(tag?: string) {
+    switch ((tag || '').toLowerCase()) {
+      case 'diwali':
+        return { title: 'Shubh Deepavali', icon: '🪔', themeColor: '#d97706' };
+      case 'eid':
+        return { title: 'Eid Mubarak', icon: '🌙', themeColor: '#059669' };
+      case 'rakhi':
+        return { title: 'Happy Raksha Bandhan', icon: '🧵', themeColor: '#e11d48' };
+      case 'holi':
+        return { title: 'Happy Holi', icon: '🎨', themeColor: '#7c3aed' };
+      case 'newyear':
+        return { title: 'Happy New Year', icon: '🎊', themeColor: '#2563eb' };
+      default:
+        return { title: 'Warm Festive Greetings', icon: '🎁', themeColor: '#d97706' };
+    }
+  }
 
   async function loadOrders() {
     setLoading(true);
@@ -200,7 +232,9 @@ export default function AdminOrdersPage() {
   function copyAddress(order: Order, idKey: string) {
     const addr = order.shippingAddress;
     const text = [
-      `Customer: ${order.customerName}`,
+      order.isGift ? `*** FESTIVE GIFT PARCEL (CONCEAL INVOICE) ***` : '',
+      order.isGift ? `Sender: ${order.senderName || 'Anonymous'} (Mobile: +91 ${order.senderPhone || ''})` : '',
+      order.isGift ? `Deliver To (Recipient): ${order.customerName}` : `Customer: ${order.customerName}`,
       `Phone: +91 ${order.customerPhone}`,
       `Address: ${addr.line1}`,
       addr.line2 ? addr.line2 : '',
@@ -208,6 +242,7 @@ export default function AdminOrdersPage() {
       `City: ${addr.city}, State: ${addr.state}`,
       `PIN Code: ${addr.pincode}`,
       `Order: ${order.orderNumber}`,
+      order.isGift && order.giftFestivalTag ? `Occasion: ${order.giftFestivalTag.toUpperCase()}` : '',
     ]
       .filter(Boolean)
       .join('\n');
@@ -416,7 +451,7 @@ export default function AdminOrdersPage() {
                         <span className="font-mono font-black text-slate-900 block">
                           {order.orderNumber}
                         </span>
-                        <div className="mt-1 flex items-center gap-1.5">
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider border ${
                               order.status === 'confirmed'
@@ -432,6 +467,12 @@ export default function AdminOrdersPage() {
                           >
                             {order.status.replace(/_/g, ' ')}
                           </span>
+                          {order.isGift && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-amber-50 text-amber-900 border border-amber-200">
+                              <Gift size={11} className="text-amber-600" />
+                              {order.giftFestivalTag || 'Gift'}
+                            </span>
+                          )}
                         </div>
                         <span className="mt-1 block text-[11px] text-slate-400">
                           {new Date(order.createdAt).toLocaleDateString('en-IN', {
@@ -445,30 +486,53 @@ export default function AdminOrdersPage() {
                       </td>
 
                       {/* Customer & Address */}
-                      <td className="px-5 py-4 align-top max-w-[260px]">
-                        <p className="font-bold text-slate-900">{order.customerName}</p>
-                        <div className="mt-0.5 flex items-center gap-2 text-xs">
-                          <a
-                            href={`tel:+91${order.customerPhone}`}
-                            className="font-medium text-primary hover:underline inline-flex items-center gap-1"
-                          >
-                            <Phone size={11} /> +91 {order.customerPhone}
-                          </a>
-                          <a
-                            href={`https://wa.me/91${order.customerPhone}?text=Hi%20${encodeURIComponent(
-                              order.customerName
-                            )},%20this%20is%20Aron%20Bites%20regarding%20your%20order%20${order.orderNumber}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-emerald-600 hover:text-emerald-700"
-                            title="WhatsApp Customer"
-                          >
-                            <MessageCircle size={13} />
-                          </a>
-                        </div>
-                        {order.customerEmail && (
-                          <p className="text-[11px] text-slate-400 truncate mt-0.5">{order.customerEmail}</p>
+                      <td className="px-5 py-4 align-top max-w-[280px]">
+                        {order.isGift && (
+                          <div className="mb-2 p-2 rounded-xl bg-amber-50/80 border border-amber-200 text-xs">
+                            <span className="font-extrabold text-amber-900 flex items-center gap-1 text-[10px] uppercase tracking-wider">
+                              <Heart size={11} className="text-amber-600 fill-amber-500" /> Sent With Love By:
+                            </span>
+                            <p className="font-black text-slate-900 mt-0.5">{order.senderName || 'Anonymous'}</p>
+                            {order.senderPhone && (
+                              <a
+                                href={`tel:+91${order.senderPhone}`}
+                                className="text-[11px] text-amber-900 hover:underline inline-flex items-center gap-1 mt-0.5"
+                              >
+                                <Phone size={10} /> +91 {order.senderPhone}
+                              </a>
+                            )}
+                          </div>
                         )}
+                        <div>
+                          {order.isGift && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-0.5">
+                              Deliver To Recipient:
+                            </span>
+                          )}
+                          <p className="font-bold text-slate-900">{order.customerName}</p>
+                          <div className="mt-0.5 flex items-center gap-2 text-xs">
+                            <a
+                              href={`tel:+91${order.customerPhone}`}
+                              className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+                            >
+                              <Phone size={11} /> +91 {order.customerPhone}
+                            </a>
+                            <a
+                              href={`https://wa.me/91${order.customerPhone}?text=Hi%20${encodeURIComponent(
+                                order.customerName
+                              )},%20this%20is%20Aron%20Bites%20regarding%20your%20order%20${order.orderNumber}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-emerald-600 hover:text-emerald-700"
+                              title="WhatsApp Customer"
+                            >
+                              <MessageCircle size={13} />
+                            </a>
+                          </div>
+                          {order.customerEmail && (
+                            <p className="text-[11px] text-slate-400 truncate mt-0.5">{order.customerEmail}</p>
+                          )}
+                        </div>
                         <div className="mt-2 text-xs text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100">
                           <div className="flex items-start justify-between gap-1">
                             <span className="leading-snug line-clamp-2">
@@ -571,7 +635,7 @@ export default function AdminOrdersPage() {
 
                       {/* Actions */}
                       <td className="px-5 py-4 align-top text-right">
-                        <div className="flex flex-col items-end gap-2">
+                        <div className="flex flex-col items-end gap-1.5">
                           <button
                             type="button"
                             onClick={() => openDispatchModal(order)}
@@ -581,10 +645,22 @@ export default function AdminOrdersPage() {
                             {hasTracking ? 'Edit Dispatch' : 'Dispatch & Link'}
                           </button>
 
+                          {order.isGift && (
+                            <button
+                              type="button"
+                              onClick={() => setCardOrder(order)}
+                              className="btn btn-sm h-[32px] px-3 text-[11px] font-bold inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100 shadow-2xs"
+                              title="Print 4x6 Festive Greeting Postcard"
+                            >
+                              <Printer size={12} className="text-amber-700" />
+                              Print Card
+                            </button>
+                          )}
+
                           <button
                             type="button"
                             onClick={() => copyAddress(order, `btn-${order.id}`)}
-                            className="btn btn-outline btn-sm h-[32px] px-2.5 text-[11px] font-semibold inline-flex items-center gap-1 bg-white text-slate-600"
+                            className="btn btn-outline btn-sm h-[30px] px-2.5 text-[11px] font-semibold inline-flex items-center gap-1 bg-white text-slate-600"
                             title="Copy customer shipping address"
                           >
                             {copiedId === `btn-${order.id}` ? (
@@ -640,6 +716,28 @@ export default function AdminOrdersPage() {
 
             {/* Modal Body */}
             <form onSubmit={handleSaveDispatch} className="p-5 sm:p-6 space-y-6">
+              {/* GIFT ORDER DISPATCH NOTICE */}
+              {selectedOrder.isGift && (
+                <div className="rounded-2xl border border-amber-300 bg-amber-50/90 p-4">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-black uppercase tracking-wider text-amber-950 flex items-center gap-1.5">
+                      <Gift size={15} className="text-amber-600" />
+                      Festive Gift Order Notice
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCardOrder(selectedOrder)}
+                      className="btn btn-sm h-[28px] px-2.5 text-[11px] font-bold bg-white text-amber-900 border border-amber-300 hover:bg-amber-100 inline-flex items-center gap-1 shadow-2xs"
+                    >
+                      <Printer size={12} /> Print 4×6 Card
+                    </button>
+                  </div>
+                  <p className="text-xs text-amber-900 leading-relaxed">
+                    🤫 <strong>Zero Price Slip:</strong> Do NOT put invoice or price tag in this package. Enclose printed greeting card from <strong>{selectedOrder.senderName || 'Sender'}</strong>.
+                  </p>
+                </div>
+              )}
+
               {/* Shipping Address Label & 1-Click Copy */}
               <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
                 <div className="flex items-center justify-between mb-2">
@@ -854,6 +952,156 @@ export default function AdminOrdersPage() {
           </div>
         </div>
       )}
+
+      {/* 4x6 INCH PRINTABLE FESTIVE POSTCARD MODAL */}
+      {cardOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs">
+          <div className="w-full max-w-xl max-h-[95vh] overflow-y-auto rounded-3xl bg-white shadow-2xl border border-slate-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 p-5 bg-slate-50/70">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+                  <Printer size={18} />
+                </div>
+                <div>
+                  <h2 className="text-base font-black text-slate-900">
+                    Print 4×6 Festive Postcard
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Order #{cardOrder.orderNumber} · {cardOrder.giftFestivalTag || 'Festive'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="btn btn-primary btn-sm h-[36px] px-4 text-xs font-bold inline-flex items-center gap-1.5 shadow-sm"
+                >
+                  <Printer size={14} /> Print Postcard (Ctrl+P)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCardOrder(null)}
+                  className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Postcard Body (Target for @media print) */}
+            <div className="p-6 flex flex-col items-center">
+              <p className="text-xs text-slate-500 mb-4 text-center">
+                This 4×6 card will be printed and placed inside the snack box. No price will be shown to the recipient.
+              </p>
+
+              {/* POSTCARD CANVAS */}
+              <div
+                id="festive-card-print"
+                className="w-full max-w-[500px] aspect-[6/4] rounded-2xl p-6 sm:p-8 flex flex-col justify-between relative shadow-lg overflow-hidden border-4 border-double border-amber-400 bg-gradient-to-br from-amber-50 via-orange-50/50 to-amber-100/40"
+              >
+                {/* Decorative Icon Watermark */}
+                <div className="absolute right-3 top-3 text-5xl opacity-15 pointer-events-none select-none">
+                  {getFestiveTitle(cardOrder.giftFestivalTag).icon}
+                </div>
+
+                {/* Card Top: Festival Greeting Banner & Logo */}
+                <div className="flex items-start justify-between border-b border-amber-300/60 pb-3">
+                  <div>
+                    <span className="text-xl sm:text-2xl mr-2">
+                      {getFestiveTitle(cardOrder.giftFestivalTag).icon}
+                    </span>
+                    <span
+                      className="text-lg sm:text-xl font-black tracking-wide text-amber-950 uppercase"
+                    >
+                      {getFestiveTitle(cardOrder.giftFestivalTag).title}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-black tracking-widest text-primary uppercase">
+                      ARON BITES
+                    </span>
+                    <span className="block text-[9px] text-amber-900 font-semibold tracking-wider uppercase">
+                      Authentic Ujjaini Snacks
+                    </span>
+                  </div>
+                </div>
+
+                {/* Card Center: Dear [Recipient] & Personalized Message */}
+                <div className="my-auto py-3">
+                  <p className="text-xs font-bold text-amber-900 mb-1.5 uppercase tracking-wider">
+                    Dear {cardOrder.recipientName || cardOrder.customerName},
+                  </p>
+                  <p className="text-sm sm:text-base font-serif italic text-slate-800 leading-relaxed font-medium">
+                    "{cardOrder.giftMessage || 'Wishing you joyous celebrations, good health, and sweet memorable crunch with your loved ones!'}"
+                  </p>
+                </div>
+
+                {/* Card Bottom: Sender Signature & Artisan Seal */}
+                <div className="border-t border-amber-300/60 pt-3 flex items-end justify-between">
+                  <div>
+                    <p className="text-[10px] uppercase font-bold tracking-wider text-amber-800">
+                      With Warmest Wishes & Love From,
+                    </p>
+                    <p className="text-base sm:text-lg font-black text-slate-900 mt-0.5">
+                      {cardOrder.senderName || 'Aron Bites Well-Wisher'}
+                    </p>
+                  </div>
+
+                  <div className="text-right text-[9px] text-slate-500 font-medium">
+                    <p className="font-bold text-amber-900">100% Artisanal & Fresh</p>
+                    <p>Ujjain (M.P.) · aronbites.com</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div className="mt-5 w-full bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-center justify-between">
+                <div>
+                  <span className="font-bold text-slate-800">Packing Checklist:</span>
+                  <p className="text-[11px] text-slate-500">Insert this printed greeting card into the box. Ensure no invoice is enclosed.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="btn btn-outline btn-sm h-[32px] px-3 font-bold text-slate-700 bg-white"
+                >
+                  Print
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global Print Styles for 4x6 Postcard */}
+      <style jsx global>{`
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          #festive-card-print,
+          #festive-card-print * {
+            visibility: visible !important;
+          }
+          #festive-card-print {
+            position: fixed !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            width: 148mm !important;
+            height: 105mm !important;
+            margin: 0 !important;
+            padding: 16mm !important;
+            box-shadow: none !important;
+            border: 3px double #d97706 !important;
+            background: #fffdf5 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+        }
+      `}</style>
     </section>
   );
 }

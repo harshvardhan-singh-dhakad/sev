@@ -24,6 +24,7 @@ import {
   LogOut,
   ExternalLink,
   ChevronRight,
+  Sparkles,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Role } from '@/lib/auth/permissions';
@@ -77,6 +78,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     group: 'Content & Media',
     items: [
+      { label: 'Festive Gifting', href: '/admin/festivals', icon: Sparkles },
       { label: 'Blog Posts', href: '/admin/blog', icon: FileText },
       { label: 'Homepage Banners', href: '/admin/banners', icon: GalleryVerticalEnd },
       { label: 'Media Library', href: '/admin/media', icon: ImageIcon },

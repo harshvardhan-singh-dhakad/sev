@@ -17,6 +17,7 @@ interface NavLink {
 const NAV_LINKS: NavLink[] = [
   { label: 'Home', href: '/', exact: true },
   { label: 'Shop', href: '/shop' },
+  { label: 'Festive Gifting', href: '/festive/diwali' },
   { label: 'Bulk Orders', href: '/bulk-orders' },
   { label: 'About', href: '/about' },
 ];

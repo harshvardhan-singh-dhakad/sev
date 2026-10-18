@@ -12,6 +12,10 @@ import {
   Loader2,
   Lock,
   ShoppingBag,
+  Gift,
+  Sparkles,
+  Heart,
+  Check,
 } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/utils';
@@ -56,6 +60,60 @@ export const INDIAN_STATES_AND_UTS = [
   'West Bengal',
 ];
 
+export const FESTIVAL_PRESETS: Record<
+  string,
+  { label: string; icon: string; presets: string[] }
+> = {
+  diwali: {
+    label: 'Diwali',
+    icon: '🪔',
+    presets: [
+      'Wishing you and your family a very happy and prosperous Diwali! Warm wishes from our home to yours.',
+      'May the divine lights of Diwali bring endless happiness, good health, and sweet crunchy moments!',
+    ],
+  },
+  eid: {
+    label: 'Eid Mubarak',
+    icon: '🌙',
+    presets: [
+      'Eid Mubarak! May Allah bless your home with joy, peace, health, and prosperity.',
+      'Wishing you and your loved ones a joyful and blessed Eid filled with delicious celebratory treats!',
+    ],
+  },
+  rakhi: {
+    label: 'Rakshabandhan',
+    icon: '🧵',
+    presets: [
+      'Happy Raksha Bandhan! Celebrating our special bond, sweet fights, and lifelong love.',
+      'Distance cannot diminish our love. Sending you authentic Ujjaini snacks and warmest Rakhi wishes!',
+    ],
+  },
+  holi: {
+    label: 'Holi',
+    icon: '🎨',
+    presets: [
+      'Holi Hai! May your life be filled with vibrant colors of happiness, laughter, and rich flavors.',
+      'Wishing you a safe, colorful and flavorful Holi celebration with delicious bites from Ujjain!',
+    ],
+  },
+  newyear: {
+    label: 'New Year',
+    icon: '🎊',
+    presets: [
+      'Happy New Year! Wishing you 365 days of good health, success, and delightful crunch.',
+      'Wishing you and your family a joyful and sweet New Year ahead filled with new milestones!',
+    ],
+  },
+  general: {
+    label: 'Celebration / Family',
+    icon: '🎁',
+    presets: [
+      'A special tasty surprise sent with lots of love just for you! Enjoy every crunchy bite.',
+      'Thinking of you! Sending pure authentic Indore-Ujjain snacks to brighten your day.',
+    ],
+  },
+};
+
 const MIN_ORDER_VALUE = 199;
 const FREE_SHIPPING_THRESHOLD = 499;
 const STANDARD_SHIPPING_FEE = 49;
@@ -78,6 +136,15 @@ export default function CheckoutPageContent() {
   const [notes, setNotes] = useState('');
   const [consent, setConsent] = useState(true);
 
+  // Festive Gifting State (Direct Shipping in Sender's Name)
+  const [isGift, setIsGift] = useState(false);
+  const [senderName, setSenderName] = useState('');
+  const [senderPhone, setSenderPhone] = useState('');
+  const [giftFestival, setGiftFestival] = useState('diwali');
+  const [giftMessage, setGiftMessage] = useState(
+    'Wishing you and your family a very happy and prosperous Diwali! Warm wishes from our home to yours.'
+  );
+
   // Validation & Submission States
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,6 +152,17 @@ export default function CheckoutPageContent() {
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('gift') === '1' || params.get('festival')) {
+        setIsGift(true);
+        const fest = params.get('festival');
+        if (fest && FESTIVAL_PRESETS[fest]) {
+          setGiftFestival(fest);
+          setGiftMessage(FESTIVAL_PRESETS[fest].presets[0]);
+        }
+      }
+    }
   }, []);
 
   if (!mounted) {
@@ -196,6 +274,16 @@ export default function CheckoutPageContent() {
       errs.state = 'Please select a state / UT';
     }
 
+    if (isGift) {
+      if (!senderName.trim() || senderName.trim().length < 2) {
+        errs.senderName = 'Please enter your name (Bhejne wale ka naam)';
+      }
+      const cleanSenderPhone = senderPhone.replace(/\D/g, '').slice(-10);
+      if (!cleanSenderPhone || !/^[6-9]\d{9}$/.test(cleanSenderPhone)) {
+        errs.senderPhone = 'Valid 10-digit Indian mobile number required for sender alerts';
+      }
+    }
+
     if (!consent) {
       errs.consent = 'You must accept the Terms of Service & Refund Policy';
     }
@@ -222,6 +310,7 @@ export default function CheckoutPageContent() {
 
     try {
       const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+      const cleanSenderPhone = senderPhone.replace(/\D/g, '').slice(-10);
       const cleanPin = pincode.trim();
 
       const response = await fetch('/api/checkout/create-order', {
@@ -246,6 +335,14 @@ export default function CheckoutPageContent() {
             qty: i.quantity,
           })),
           notes: notes.trim() || null,
+          isGift,
+          senderName: isGift ? senderName.trim() : undefined,
+          senderPhone: isGift ? cleanSenderPhone : undefined,
+          senderEmail: isGift ? email.trim() : undefined,
+          recipientName: isGift ? name.trim() : undefined,
+          giftMessage: isGift ? giftMessage.trim() : undefined,
+          giftFestivalTag: isGift ? giftFestival : undefined,
+          hidePriceSlip: true,
         }),
       });
 
@@ -395,31 +492,247 @@ export default function CheckoutPageContent() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left Column: Form Details (8 Cols) */}
             <div className="lg:col-span-8 space-y-6">
-              {/* Section 1: Contact Details */}
+              {/* FESTIVE GIFTING SELECTION CARD */}
+              <div
+                className={`rounded-2xl border transition-all duration-300 p-5 sm:p-6 ${
+                  isGift
+                    ? 'bg-gradient-to-br from-amber-500/10 via-amber-50/80 to-orange-50/50 border-amber-300 shadow-md ring-2 ring-amber-400/20'
+                    : 'bg-white border-[var(--color-border)] shadow-sm hover:border-amber-300'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3.5">
+                    <div
+                      className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${
+                        isGift
+                          ? 'bg-amber-500 text-white shadow-md shadow-amber-500/25'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      <Gift size={22} />
+                    </div>
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2
+                          className="text-base sm:text-lg font-black text-[var(--color-ink)]"
+                          style={{ fontFamily: 'var(--font-display)' }}
+                        >
+                          🎁 Send as a Festive Gift
+                        </h2>
+                        <span className="text-[11px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                          <Sparkles size={11} /> 100% Free Service
+                        </span>
+                      </div>
+                      <p className="text-xs text-[var(--color-ink-muted)] mt-1 max-w-xl">
+                        Direct unke ghar ship karein <strong>AAPKE naam se!</strong> Box ke andar aapka personal festive greeting card jayega aur invoice par price nahi dikhega.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Toggle Button */}
+                  <button
+                    type="button"
+                    onClick={() => setIsGift(!isGift)}
+                    className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
+                      isGift ? 'bg-amber-500' : 'bg-slate-200'
+                    }`}
+                    role="switch"
+                    aria-checked={isGift}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                        isGift ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Expanded Gift Customization */}
+                {isGift && (
+                  <div className="mt-6 pt-5 border-t border-amber-200/80 space-y-5 animate-in fade-in duration-300">
+                    {/* Cultural / Festive Occasion Selector */}
+                    <div>
+                      <label className="block text-xs font-bold text-amber-950 uppercase tracking-wider mb-2">
+                        Choose Festive Occasion
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(FESTIVAL_PRESETS).map(([key, item]) => {
+                          const isSelected = giftFestival === key;
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => {
+                                setGiftFestival(key);
+                                setGiftMessage(item.presets[0]);
+                              }}
+                              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all ${
+                                isSelected
+                                  ? 'bg-amber-600 text-white shadow-sm ring-2 ring-amber-600/30'
+                                  : 'bg-white text-slate-700 border border-slate-200 hover:border-amber-300'
+                              }`}
+                            >
+                              <span>{item.icon}</span>
+                              <span>{item.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Sender Details (Bhejne Wale Ka Naam & Mobile) */}
+                    <div className="bg-white/80 p-4 rounded-xl border border-amber-200/70 space-y-4">
+                      <p className="text-xs font-extrabold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                        <Heart size={14} className="text-amber-600 fill-amber-500" />
+                        Sender Details (Bhejne Wale Ki Jankari)
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div data-error={!!errors.senderName}>
+                          <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">
+                            Aapka Naam / Family Name <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={senderName}
+                            onChange={(e) => setSenderName(e.target.value)}
+                            placeholder="e.g. Ramesh Sharma & Parivar"
+                            className={`w-full px-3.5 py-2 rounded-xl border text-sm text-[var(--color-ink)] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white ${
+                              errors.senderName ? 'border-red-500 bg-red-50/40' : 'border-slate-200'
+                            }`}
+                          />
+                          {errors.senderName ? (
+                            <p className="text-xs text-red-600 mt-1 font-medium">{errors.senderName}</p>
+                          ) : (
+                            <p className="text-[11px] text-slate-500 mt-1">
+                              Greeting card aur outer parcel par "Sent with love from" me yehi naam print hoga
+                            </p>
+                          )}
+                        </div>
+
+                        <div data-error={!!errors.senderPhone}>
+                          <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">
+                            Aapka WhatsApp / Mobile <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative flex rounded-xl overflow-hidden border border-slate-200 focus-within:ring-2 focus-within:ring-amber-500 focus-within:border-transparent bg-white">
+                            <span className="bg-slate-100 text-slate-700 text-xs font-bold px-3 py-2 flex items-center border-r border-slate-200 select-none">
+                              +91
+                            </span>
+                            <input
+                              type="tel"
+                              inputMode="tel"
+                              maxLength={10}
+                              value={senderPhone}
+                              onChange={(e) => setSenderPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                              placeholder="9826012345"
+                              className="w-full px-3 py-2 text-sm text-[var(--color-ink)] placeholder-slate-400 focus:outline-none"
+                            />
+                          </div>
+                          {errors.senderPhone ? (
+                            <p className="text-xs text-red-600 mt-1 font-medium">{errors.senderPhone}</p>
+                          ) : (
+                            <p className="text-[11px] text-slate-500 mt-1">
+                              Payment receipt aur parcel tracking link aapke is number par bheja jayega
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Personal Festive Greeting Message */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-bold text-amber-950 uppercase tracking-wider">
+                          Personal Greeting Message (Postcard par print hoga)
+                        </label>
+                        <span className="text-[11px] text-slate-400">{giftMessage.length}/250 chars</span>
+                      </div>
+                      <textarea
+                        rows={3}
+                        maxLength={250}
+                        value={giftMessage}
+                        onChange={(e) => setGiftMessage(e.target.value)}
+                        placeholder="Type your warm personal festive wishes..."
+                        className="w-full p-3 rounded-xl border border-amber-200 bg-white text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-amber-500 placeholder-slate-400"
+                      />
+
+                      {/* Quick Preset Wish Chips */}
+                      <div className="mt-2">
+                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                          Tap to select quick wishes:
+                        </p>
+                        <div className="flex flex-col gap-1.5">
+                          {(FESTIVAL_PRESETS[giftFestival]?.presets || []).map((preset, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setGiftMessage(preset)}
+                              className={`text-left text-xs p-2 rounded-lg border transition ${
+                                giftMessage === preset
+                                  ? 'bg-amber-100/80 border-amber-300 font-semibold text-amber-950'
+                                  : 'bg-white/70 border-slate-200 text-slate-600 hover:bg-white hover:border-amber-200'
+                              }`}
+                            >
+                              "{preset}"
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Gifting Guarantee Pills */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-amber-200/60 text-xs">
+                      <div className="flex items-center gap-2 text-emerald-800 bg-white/70 px-2.5 py-1.5 rounded-lg border border-emerald-100">
+                        <Check size={14} className="text-emerald-600 shrink-0" />
+                        <span>Free 4×6 Greeting Card</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-emerald-800 bg-white/70 px-2.5 py-1.5 rounded-lg border border-emerald-100">
+                        <Check size={14} className="text-emerald-600 shrink-0" />
+                        <span>Price Concealed Inside</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-emerald-800 bg-white/70 px-2.5 py-1.5 rounded-lg border border-emerald-100">
+                        <Check size={14} className="text-emerald-600 shrink-0" />
+                        <span>Sent in Your Name</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Section 1: Contact Details / Recipient Details */}
               <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5 sm:p-6 shadow-sm">
                 <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
                   <span className="w-6 h-6 rounded-full bg-[var(--color-primary)] text-white text-xs font-bold flex items-center justify-center">
                     1
                   </span>
-                  <h2
-                    className="text-base sm:text-lg font-bold text-[var(--color-ink)]"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                  >
-                    Contact Details
-                  </h2>
+                  <div>
+                    <h2
+                      className="text-base sm:text-lg font-bold text-[var(--color-ink)]"
+                      style={{ fontFamily: 'var(--font-display)' }}
+                    >
+                      {isGift ? "Recipient's Contact Details (Jisko Gift Deliver Hoga)" : 'Contact Details'}
+                    </h2>
+                    {isGift && (
+                      <p className="text-xs text-[var(--color-ink-muted)] mt-0.5">
+                        Courier partner delivery coordination ke liye inke mobile number par call karega.
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Full Name */}
                   <div className="sm:col-span-2" data-error={!!errors.name}>
                     <label className="block text-xs font-bold text-[var(--color-ink)] uppercase tracking-wider mb-1.5">
-                      Full Name <span className="text-red-500">*</span>
+                      {isGift ? "Recipient's Full Name (Jinke Naam Par Delivery Hogi)" : 'Full Name'}{' '}
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Ramesh Sharma"
+                      placeholder={isGift ? 'e.g. Priyanshu Sharma' : 'e.g. Ramesh Sharma'}
                       className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-[var(--color-ink)] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all ${
                         errors.name ? 'border-red-500 bg-red-50/30' : 'border-[var(--color-border)]'
                       }`}
@@ -432,7 +745,8 @@ export default function CheckoutPageContent() {
                   {/* 10-Digit Mobile */}
                   <div data-error={!!errors.phone}>
                     <label className="block text-xs font-bold text-[var(--color-ink)] uppercase tracking-wider mb-1.5">
-                      10-Digit Mobile <span className="text-red-500">*</span>
+                      {isGift ? "Recipient's 10-Digit Mobile" : '10-Digit Mobile'}{' '}
+                      <span className="text-red-500">*</span>
                     </label>
                     <div className="relative flex rounded-xl overflow-hidden border border-[var(--color-border)] focus-within:ring-2 focus-within:ring-[var(--color-primary)] focus-within:border-transparent">
                       <span className="bg-slate-100 text-[var(--color-ink)] text-xs font-bold px-3 py-2.5 flex items-center border-r border-slate-200 select-none">
@@ -491,7 +805,7 @@ export default function CheckoutPageContent() {
                     className="text-base sm:text-lg font-bold text-[var(--color-ink)]"
                     style={{ fontFamily: 'var(--font-display)' }}
                   >
-                    Delivery Address
+                    {isGift ? "Recipient's Delivery Address (Jahan Parcel Deliver Karna Hai)" : 'Delivery Address'}
                   </h2>
                 </div>
 
@@ -730,6 +1044,18 @@ export default function CheckoutPageContent() {
                       {isFreeShipping ? 'FREE' : formatPrice(shippingFee)}
                     </span>
                   </div>
+
+                  {isGift && (
+                    <div className="flex justify-between items-center text-xs text-amber-900 bg-amber-50/90 p-2.5 rounded-xl border border-amber-200">
+                      <div className="flex items-center gap-1.5 font-bold">
+                        <Gift size={14} className="text-amber-600" />
+                        <span>Festive Card & Packing</span>
+                      </div>
+                      <span className="font-extrabold text-emerald-700 uppercase bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        FREE (₹0)
+                      </span>
+                    </div>
+                  )}
 
                   <div className="pt-3 border-t border-slate-100 flex justify-between items-baseline">
                     <div>

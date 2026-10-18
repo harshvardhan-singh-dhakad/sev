@@ -9,7 +9,22 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { customerName, customerPhone, customerEmail, shippingAddress, items, notes } = body;
+    const {
+      customerName,
+      customerPhone,
+      customerEmail,
+      shippingAddress,
+      items,
+      notes,
+      isGift,
+      senderName,
+      senderPhone,
+      senderEmail,
+      recipientName,
+      giftMessage,
+      giftFestivalTag,
+      hidePriceSlip,
+    } = body;
 
     // Validate Customer Name
     if (!customerName || typeof customerName !== 'string' || customerName.trim().length < 2) {
@@ -110,6 +125,14 @@ export async function POST(request: NextRequest) {
         qty: Math.floor(i.qty),
       })),
       notes: notes ? String(notes).trim() : null,
+      isGift: Boolean(isGift),
+      senderName: senderName ? String(senderName).trim() : undefined,
+      senderPhone: senderPhone ? String(senderPhone).trim() : undefined,
+      senderEmail: senderEmail ? String(senderEmail).trim() : undefined,
+      recipientName: recipientName ? String(recipientName).trim() : undefined,
+      giftMessage: giftMessage ? String(giftMessage).trim() : undefined,
+      giftFestivalTag: giftFestivalTag ? String(giftFestivalTag).trim() : undefined,
+      hidePriceSlip: hidePriceSlip !== false,
     });
 
     // Create corresponding Razorpay Order

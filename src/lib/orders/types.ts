@@ -66,6 +66,14 @@ export interface OrderRecord {
   tracking_awb: string | null;
   tracking_url: string | null;
   notes: string | null;
+  is_gift: number;
+  sender_name: string | null;
+  sender_phone: string | null;
+  sender_email: string | null;
+  recipient_name: string | null;
+  gift_message: string | null;
+  gift_festival_tag: string | null;
+  hide_price_slip: number;
   created_at: string;
   updated_at: string;
 }
@@ -127,6 +135,14 @@ export interface CreatePendingOrderInput {
   shippingAddress: ShippingAddressInput;
   items: OrderItemInput[];
   notes?: string | null;
+  isGift?: boolean;
+  senderName?: string;
+  senderPhone?: string;
+  senderEmail?: string;
+  recipientName?: string;
+  giftMessage?: string;
+  giftFestivalTag?: string;
+  hidePriceSlip?: boolean;
   customId?: string; // For testing idempotency
 }
 
@@ -210,6 +226,13 @@ export interface PublicOrderDetails {
     qty: number;
     line_total: number;
   }>;
+  is_gift?: boolean;
+  sender_name?: string | null;
+  sender_phone?: string | null;
+  recipient_name?: string | null;
+  gift_message?: string | null;
+  gift_festival_tag?: string | null;
+  hide_price_slip?: boolean;
   created_at: string;
   updated_at: string;
 }

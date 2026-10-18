@@ -24,7 +24,9 @@ export async function GET() {
       `SELECT id, order_number, public_token, status, customer_name, customer_phone, customer_email,
               shipping_line1, shipping_line2, shipping_landmark, shipping_city, shipping_state, shipping_pincode,
               subtotal, shipping, total, razorpay_order_id, paid_at,
-              tracking_courier, tracking_awb, tracking_url, notes, created_at, updated_at
+              tracking_courier, tracking_awb, tracking_url, notes,
+              is_gift, sender_name, sender_phone, sender_email, recipient_name, gift_message, gift_festival_tag, hide_price_slip,
+              created_at, updated_at
          FROM orders ORDER BY created_at DESC LIMIT 250`
     );
 
@@ -91,6 +93,14 @@ export async function GET() {
         trackingAwb: row.tracking_awb || '',
         trackingUrl: row.tracking_url || '',
         notes: row.notes || '',
+        isGift: Boolean(row.is_gift),
+        senderName: (row.sender_name as string) || '',
+        senderPhone: (row.sender_phone as string) || '',
+        senderEmail: (row.sender_email as string) || '',
+        recipientName: (row.recipient_name as string) || '',
+        giftMessage: (row.gift_message as string) || '',
+        giftFestivalTag: (row.gift_festival_tag as string) || '',
+        hidePriceSlip: row.hide_price_slip !== 0,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
         items: itemsByOrderId[String(row.id)] || [],
