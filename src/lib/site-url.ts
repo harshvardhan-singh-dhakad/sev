@@ -1,4 +1,4 @@
-const FALLBACK_SITE_URL = 'https://sev.rasvat.workers.dev';
+const FALLBACK_SITE_URL = 'https://aronbites.com';
 const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || FALLBACK_SITE_URL;
 const parsedSiteUrl = new URL(configuredSiteUrl, FALLBACK_SITE_URL);
 
