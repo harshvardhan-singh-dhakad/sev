@@ -294,12 +294,14 @@ export default function CheckoutPageContent() {
       }
 
       // Open official Razorpay Checkout Modal
+      const logoUrl = `${window.location.origin}/images/Aron-bites-192x192.png`;
       const opened = openRazorpayModal({
         key: data.razorpay.keyId,
         amount: data.razorpay.amount,
         currency: data.razorpay.currency || 'INR',
         name: 'Aron Bites',
         description: `Order #${data.order.orderNumber}`,
+        image: logoUrl,
         order_id: data.razorpay.orderId,
         prefill: {
           name: name.trim(),
@@ -307,7 +309,7 @@ export default function CheckoutPageContent() {
           email: email.trim() || undefined,
         },
         theme: {
-          color: '#D32F2F',
+          color: '#B61E01',
         },
         handler: async (paymentResponse) => {
           try {
