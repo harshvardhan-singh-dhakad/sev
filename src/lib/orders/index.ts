@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * RASVAT ORDERS ENGINE (Cloudflare D1 & Worker Compliant)
+ * ARON BITES ORDERS ENGINE (Cloudflare D1 & Worker Compliant)
  * ============================================================
  * The SINGLE authoritative module for all order creation, payment
  * state transitions, stock decrementing, and tracking.

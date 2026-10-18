@@ -1,7 +1,7 @@
 /**
--- Razorpay & D1 Orders Engine Types
--- Canonical types for Rasvat orders, items, payments, refunds, and events.
--*/
+ * Razorpay & D1 Orders Engine Types
+ * Canonical types for Aron Bites orders, items, payments, refunds, and events.
+ */
 
 export type OrderEngineStatus =
   | 'pending_payment'
