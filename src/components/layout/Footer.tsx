@@ -62,10 +62,26 @@ export function Footer() {
               The authentic taste of India, delivered fresh to your doorstep. Premium quality, unmatched crunch.
             </p>
 
-            {/* Newsletter is hidden until a real consent and delivery provider is configured. */}
             <div className="w-full max-w-sm">
-              <p className="text-sm font-semibold">Need help with an order?</p>
-              <Link href="/contact" className="mt-2 inline-block underline text-sm">Contact Aron Bites support</Link>
+              <p className="text-sm font-bold text-black">Need help with an order?</p>
+              <div className="mt-2.5 text-xs text-black/80 space-y-1.5">
+                <p>
+                  <span className="font-semibold text-black">Email:</span>{' '}
+                  <a href="mailto:support@aronbites.com" className="hover:underline font-medium text-black">
+                    support@aronbites.com
+                  </a>
+                </p>
+                <p>
+                  <span className="font-semibold text-black">Phone / WhatsApp:</span>{' '}
+                  <a href="tel:+916267847718" className="hover:underline font-medium text-black">
+                    +91 62678 47718
+                  </a>
+                  {' · '}
+                  <a href="tel:+919885123339" className="hover:underline font-medium text-black">
+                    +91 98851 23339
+                  </a>
+                </p>
+              </div>
             </div>
 
             {/* Social links will be added after real Aron Bites profiles are provided. */}

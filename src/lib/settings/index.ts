@@ -13,6 +13,7 @@ export interface AdminStoreSettings {
   min_cart_value_paise: number;
   free_shipping_above_paise: number | null;
   shipping_charge_paise: number;
+  sample_delivery_charge_paise: number;
   bulk_minimum_kg: number;
   email_sender: string;
 }
@@ -20,17 +21,18 @@ export interface AdminStoreSettings {
 const DEFAULT_SETTINGS: AdminStoreSettings = {
   store_name: 'Aron Bites',
   contact_email: 'support@aronbites.com',
-  contact_phone: '+91 98765 43210',
+  contact_phone: '+91 62678 47718, +91 98851 23339',
   address: 'Indore, Madhya Pradesh 452001, India',
   fssai_no: null,
   gstin: null,
   manufacturer: null,
-  customer_care: null,
+  customer_care: '+91 62678 47718',
   min_cart_value_paise: 19900,
-  free_shipping_above_paise: null,
-  shipping_charge_paise: 5000,
+  free_shipping_above_paise: 49900,
+  shipping_charge_paise: 4900,
+  sample_delivery_charge_paise: 4900,
   bulk_minimum_kg: 5,
-  email_sender: 'orders@aronbites.com',
+  email_sender: 'support@aronbites.com',
 };
 
 function asNumber(value: string | undefined, fallback: number): number {
@@ -59,6 +61,7 @@ export async function getAdminStoreSettings(): Promise<AdminStoreSettings> {
       ? asNumber(values.get('free_shipping_above_paise'), 0) || null
       : DEFAULT_SETTINGS.free_shipping_above_paise,
     shipping_charge_paise: asNumber(values.get('shipping_charge_paise'), DEFAULT_SETTINGS.shipping_charge_paise),
+    sample_delivery_charge_paise: asNumber(values.get('sample_delivery_charge_paise'), DEFAULT_SETTINGS.sample_delivery_charge_paise),
     bulk_minimum_kg: asNumber(values.get('bulk_minimum_kg'), DEFAULT_SETTINGS.bulk_minimum_kg),
     email_sender: values.get('email_sender') || DEFAULT_SETTINGS.email_sender,
   };

@@ -37,7 +37,7 @@ const LLMS_TEXT = `# Aron Bites
 
 ## Customer Support & Verification
 - **Support Email**: support@aronbites.com
-- **Customer Care**: +91 98765 43210
+- **Customer Care**: +91 62678 47718, +91 98851 23339
 - **Headquarters**: Indore, Madhya Pradesh 452001, India
 - **Operating Hours**: Monday – Saturday, 9:00 AM – 7:00 PM IST
 `;

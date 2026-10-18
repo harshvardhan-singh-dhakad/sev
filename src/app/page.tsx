@@ -51,7 +51,7 @@ export default async function HomePage() {
         description:
           'Premier Indian manufacturer of authentic Indori Sev, Ratlami Sev, and Malwa namkeen snacks. Retail delivery and bulk supply.',
         email: 'support@aronbites.com',
-        telephone: '+91-9876543210',
+        telephone: '+91 62678 47718',
         address: {
           '@type': 'PostalAddress',
           streetAddress: 'Indore',
@@ -72,7 +72,7 @@ export default async function HomePage() {
         priceRange: '₹₹',
         contactPoint: {
           '@type': 'ContactPoint',
-          telephone: '+91-9876543210',
+          telephone: '+91 62678 47718',
           contactType: 'customer service',
           email: 'support@aronbites.com',
           areaServed: 'IN',

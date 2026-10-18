@@ -442,7 +442,10 @@ export default function AccountPage() {
             <section className="rounded-3xl bg-amber-950 p-5 text-amber-50 shadow-sm">
               <div className="flex items-center gap-2 text-sm font-bold"><CircleHelp size={17} className="text-amber-300" />Need a little help?</div>
               <p className="mt-2 text-xs leading-5 text-amber-100/75">We’re happy to help with an order, delivery or anything tasty.</p>
-              <a href="tel:+919876543210" className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-3 py-2.5 text-xs font-bold text-white transition hover:bg-amber-400"><PhoneCall size={14} />Call Aron Bites support</a>
+              <div className="mt-4 flex flex-col gap-2">
+                <a href="tel:+916267847718" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-3 py-2 text-xs font-bold text-white transition hover:bg-amber-400"><PhoneCall size={14} />Call +91 62678 47718</a>
+                <a href="tel:+919885123339" className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-600 bg-amber-900/60 px-3 py-2 text-xs font-bold text-amber-100 transition hover:bg-amber-900"><PhoneCall size={14} />Call +91 98851 23339</a>
+              </div>
               <Link href="/track-order" className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-700 px-3 py-2.5 text-xs font-bold text-amber-50 transition hover:bg-amber-900"><Clock3 size={14} />Track an order</Link>
             </section>
 

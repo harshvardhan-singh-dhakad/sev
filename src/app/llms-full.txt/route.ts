@@ -72,7 +72,7 @@ Aron Bites crafts authentic varieties using traditional heritage recipes:
 - **Brand**: Aron Bites
 - **Official Website**: https://aronbites.com
 - **Customer Support**: support@aronbites.com
-- **Phone / WhatsApp**: +91 98765 43210
+- **Phone / WhatsApp**: +91 62678 47718, +91 98851 23339
 - **Operational Address**: Indore, Madhya Pradesh 452001, India
 `;
 

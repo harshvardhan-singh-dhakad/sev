@@ -14,6 +14,7 @@ import {
   RefreshCw,
   MapPin,
   Calendar,
+  ExternalLink,
 } from 'lucide-react';
 import { PublicOrderDetails } from '@/lib/orders/types';
 import { formatPrice } from '@/lib/utils';
@@ -290,6 +291,59 @@ export default function OrderDetailsClient({ token, initialOrder }: OrderDetails
               </div>
             </div>
 
+            {/* Courier Dispatch & Direct Tracking Link Card */}
+            {order.tracking && (order.tracking.courier || order.tracking.awb || order.tracking.url) && (
+              <div className="bg-gradient-to-br from-amber-50 via-orange-50 to-white rounded-3xl border-2 border-amber-300 p-6 sm:p-7 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1.5">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-200/90 text-amber-950">
+                      <Truck size={14} className="text-amber-800" />
+                      Dispatched via {order.tracking.courier || 'Express Courier'}
+                    </div>
+                    <h2
+                      className="text-xl font-black text-slate-900"
+                      style={{ fontFamily: 'var(--font-display)' }}
+                    >
+                      Your Parcel is on the Way!
+                    </h2>
+                    {order.tracking.awb && (
+                      <p className="text-xs text-slate-700">
+                        Consignment / AWB Number:{' '}
+                        <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-amber-200 shadow-2xs">
+                          {order.tracking.awb}
+                        </span>
+                      </p>
+                    )}
+                    <p className="text-xs text-slate-600">
+                      Delivery partner:{' '}
+                      <strong className="text-slate-900">{order.tracking.courier || 'Standard Express'}</strong>
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    {order.tracking.url && (
+                      <a
+                        href={order.tracking.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-primary h-[46px] px-6 text-xs font-bold inline-flex items-center gap-2 shadow-sm"
+                      >
+                        Track Directly on {order.tracking.courier || 'Courier'}
+                        <ExternalLink size={14} />
+                      </a>
+                    )}
+                    <Link
+                      href={`/track-order?order=${order.order_number}&phone=${order.customer_phone}`}
+                      className="btn btn-outline h-[46px] px-4 text-xs font-bold inline-flex items-center gap-1.5 bg-white"
+                    >
+                      View Timeline
+                      <ArrowRight size={13} />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* "What Happens Next" 3-Step Timeline Card */}
             <div className="bg-white rounded-3xl border border-[var(--color-border)] p-6 sm:p-8 shadow-sm">
               <h2
@@ -465,7 +519,7 @@ export default function OrderDetailsClient({ token, initialOrder }: OrderDetails
                 </div>
               </div>
               <a
-                href="https://wa.me/919826000000"
+                href="https://wa.me/916267847718?text=Hi%20Aron%20Bites%20team,%20I%20have%20a%20question%20regarding%20my%20order"
                 target="_blank"
                 rel="noreferrer"
                 className="btn btn-outline btn-sm bg-white font-bold inline-flex items-center gap-1.5"

@@ -16,6 +16,7 @@ interface StoreSettingsData {
   min_cart_value_paise: number;
   free_shipping_above_paise: number | null;
   shipping_charge_paise: number;
+  sample_delivery_charge_paise: number;
   bulk_minimum_kg: number;
   email_sender: string;
 }
@@ -330,6 +331,32 @@ export default function AdminSettingsPage() {
                   className="w-full h-10 pl-7 pr-3 rounded-xl border border-border bg-gray-50 text-xs sm:text-sm text-ink focus:bg-white focus:ring-2 focus:ring-primary focus:outline-none"
                 />
               </div>
+              <p className="text-[11px] text-gray-500 mt-1">Standard delivery charge for orders below ₹499.</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
+                Test Sample Delivery Charge (₹)
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 text-xs font-bold">
+                  ₹
+                </span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  required
+                  value={(settings.sample_delivery_charge_paise || 4900) / 100}
+                  onChange={(e) =>
+                    handleChange('sample_delivery_charge_paise', Math.round(parseFloat(e.target.value || '0') * 100))
+                  }
+                  className="w-full h-10 pl-7 pr-3 rounded-xl border border-border bg-gray-50 text-xs sm:text-sm text-ink focus:bg-white focus:ring-2 focus:ring-primary focus:outline-none"
+                />
+              </div>
+              <p className="text-[11px] text-gray-500 mt-1">
+                Sample items (50g) are 100% free; customer only pays this delivery fee. Default is ₹49.
+              </p>
             </div>
 
             <div>
