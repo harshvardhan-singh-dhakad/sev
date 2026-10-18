@@ -12,6 +12,7 @@ export async function POST() {
     }
 
     cookieStore.delete(SESSION_COOKIE_NAME);
+    cookieStore.delete('rasvat_admin_session');
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Logout error:', error);

@@ -4,8 +4,8 @@ import PublicLayout from '@/components/layout/PublicLayout';
 import { absoluteUrl } from '@/lib/site-url';
 
 export const metadata: Metadata = {
-  title: 'Shipping & Delivery Policy',
-  description: 'Rasvat order minimums, shipping charges, dispatch, and delivery information.',
+  title: 'Shipping & Delivery Policy | Aron Bites',
+  description: 'Aron Bites order minimums, shipping charges, dispatch, and delivery information.',
   alternates: { canonical: absoluteUrl('/shipping-policy') },
 };
 
@@ -25,7 +25,7 @@ export default function ShippingPolicyPage() {
             <h2>Address and delivery issues</h2>
             <p>Please check your delivery address and phone number before placing an order. If tracking shows a delivery issue, contact support with your order number. You can also use the <Link href="/track-order">order tracking page</Link>.</p>
             <h2>Contact</h2>
-            <p>For shipping questions, write to <a href="mailto:support@rasvat.in">support@rasvat.in</a>.</p>
+            <p>For shipping questions, write to <a href="mailto:support@aronbites.com">support@aronbites.com</a>.</p>
           </div>
         </article>
       </main>

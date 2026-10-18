@@ -31,7 +31,7 @@ export default async function HomePage() {
   const websiteJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'Rasvat',
+    name: 'Aron Bites',
     url: absoluteUrl('/'),
     inLanguage: 'en-IN',
   };

@@ -4,8 +4,8 @@ import { Role } from './permissions';
 
 /** Seed helpers for D1 migrations or an authenticated setup route. */
 export async function ensureOwnerUser(
-  email: string = process.env.ADMIN_OWNER_EMAIL || 'owner@rasvat.in',
-  password: string = process.env.ADMIN_OWNER_PASSWORD || 'RasvatOwner@2026'
+  email: string = process.env.ADMIN_OWNER_EMAIL || 'owner@aronbites.com',
+  password: string = process.env.ADMIN_OWNER_PASSWORD || 'AronBitesOwner@2026'
 ): Promise<{ created: boolean; id: string; email: string }> {
   const existing = await queryFirst<{ id: string; email: string }>(
     "SELECT id, email FROM users WHERE role = 'owner' LIMIT 1"
@@ -19,7 +19,7 @@ export async function ensureOwnerUser(
   await execute(
     `INSERT INTO users (id, email, password_hash, salt, name, role, totp_enabled, is_active, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, 'owner', 0, 1, ?, ?)`,
-    [id, cleanEmail, hash, salt, 'Rasvat Owner', now, now]
+    [id, cleanEmail, hash, salt, 'Aron Bites Owner', now, now]
   );
   return { created: true, id, email: cleanEmail };
 }

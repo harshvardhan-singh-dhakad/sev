@@ -25,7 +25,7 @@ export async function generateMetadata({
 
   if (!product || product.status !== 'active') {
     return {
-      title: 'Product Not Found | Rasvat',
+      title: 'Product Not Found | Aron Bites',
       description: 'The requested product could not be found.',
     };
   }
@@ -34,11 +34,11 @@ export async function generateMetadata({
   const isDraft = product.status !== 'active';
 
   return {
-    title: `${product.name} | Rasvat Premium Sev & Namkeen`,
+    title: `${product.name} | Aron Bites Premium Sev & Namkeen`,
     description: product.short_description,
     alternates: { canonical: absoluteUrl(`/shop/${product.slug}`) },
     openGraph: {
-      title: `${product.name} | Rasvat Authentic Sev`,
+      title: `${product.name} | Aron Bites Authentic Sev`,
       description: product.short_description,
       images: [
         {
@@ -83,7 +83,7 @@ export default async function ProductDetailPage({
     category: product.category,
     brand: {
       '@type': 'Brand',
-      name: 'Rasvat',
+      name: 'Aron Bites',
     },
     offers: product.variants
       .filter((v) => v.is_active)

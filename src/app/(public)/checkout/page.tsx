@@ -3,7 +3,7 @@ import PublicLayout from '@/components/layout/PublicLayout';
 import CheckoutPageContent from './CheckoutPageContent';
 
 export const metadata: Metadata = {
-  title: 'Secure Checkout | Rasvat Authentic Snacks',
+  title: 'Secure Checkout | Aron Bites',
   description: 'Complete your authentic Indian snacks and Sev order with fast doorstep delivery.',
   robots: {
     index: false,

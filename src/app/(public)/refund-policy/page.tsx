@@ -3,8 +3,8 @@ import PublicLayout from '@/components/layout/PublicLayout';
 import { absoluteUrl } from '@/lib/site-url';
 
 export const metadata: Metadata = {
-  title: 'Refund & Cancellation Policy',
-  description: 'How to request help with a damaged, incorrect, missing, or cancelled Rasvat order.',
+  title: 'Refund & Cancellation Policy | Aron Bites',
+  description: 'How to request help with a damaged, incorrect, missing, or cancelled Aron Bites order.',
   alternates: { canonical: absoluteUrl('/refund-policy') },
 };
 
@@ -18,7 +18,7 @@ export default function RefundPolicyPage() {
           <p className="text-sm text-gray-500 mt-3">Updated: 16 October 2026</p>
           <div className="prose max-w-none mt-8">
             <h2>Damaged, incorrect, or missing items</h2>
-            <p>If an order arrives damaged, contains an incorrect item, or is missing an item, contact us as soon as reasonably possible at <a href="mailto:support@rasvat.in">support@rasvat.in</a>. Include the order number, a short description, and clear photos of the parcel and product where available. We will review the issue and explain the next steps.</p>
+            <p>If an order arrives damaged, contains an incorrect item, or is missing an item, contact us as soon as reasonably possible at <a href="mailto:support@aronbites.com">support@aronbites.com</a>. Include the order number, a short description, and clear photos of the parcel and product where available. We will review the issue and explain the next steps.</p>
             <h2>Cancellation requests</h2>
             <p>Contact support promptly if you need to cancel. We will try to stop an order that has not been handed to the courier. A cancellation may no longer be possible after dispatch; contact us so we can check the order status.</p>
             <h2>Refunds</h2>
@@ -26,7 +26,7 @@ export default function RefundPolicyPage() {
             <h2>Consumer rights</h2>
             <p>This policy does not limit any rights you have under applicable consumer-protection law.</p>
             <h2>Contact</h2>
-            <p>For a return, refund, or cancellation request, email <a href="mailto:support@rasvat.in">support@rasvat.in</a> with your order number.</p>
+            <p>For a return, refund, or cancellation request, email <a href="mailto:support@aronbites.com">support@aronbites.com</a> with your order number.</p>
           </div>
         </article>
       </main>

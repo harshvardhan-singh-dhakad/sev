@@ -13,7 +13,7 @@ const DEFAULT_FEATURES = [
     icon: 'Shield',
     title: 'Premium Quality',
     description:
-      'Only the finest gram flour and spices go into every batch of Rasvat Sev. Uncompromising quality, every time.',
+      'Only the finest gram flour and spices go into every batch of Aron Bites Sev. Uncompromising quality, every time.',
   },
   {
     id: 'fresh',
@@ -88,7 +88,7 @@ export async function WhyChooseUsSection() {
           <span
             className="inline-block text-xs font-bold uppercase tracking-widest mb-3 px-3 py-1 rounded-full bg-secondary text-ink"
           >
-            Why Rasvat
+            Why Aron Bites
           </span>
           <h2
             id="why-choose-us-heading"
@@ -98,7 +98,7 @@ export async function WhyChooseUsSection() {
             Why Choose Us
           </h2>
           <p className="section-subheading" style={{ color: 'var(--color-ink-muted)' }}>
-            Quality, freshness and reliability — the three pillars of Rasvat
+            Quality, freshness and reliability — the three pillars of Aron Bites
           </p>
         </div>
 

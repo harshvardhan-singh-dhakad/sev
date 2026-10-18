@@ -7,8 +7,8 @@ import { getPublishedBlogs, type PublishedBlog } from '@/lib/blogs';
 import { absoluteUrl } from '@/lib/site-url';
 
 export const metadata: Metadata = {
-  title: 'Sev Stories & Recipes',
-  description: 'Recipes, serving ideas, and stories about authentic Indian sev and namkeen from Rasvat.',
+  title: 'Sev Stories & Recipes | Aron Bites',
+  description: 'Recipes, serving ideas, and stories about authentic Indian sev and namkeen from Aron Bites.',
   alternates: { canonical: absoluteUrl('/blog') },
 };
 
@@ -21,7 +21,7 @@ export default async function BlogPage() {
     <PublicLayout>
       <main className="container-site py-12 sm:py-16 min-h-[55vh]">
         <header className="max-w-2xl mb-10">
-          <p className="text-sm font-bold uppercase tracking-wider text-primary">Rasvat Journal</p>
+          <p className="text-sm font-bold uppercase tracking-wider text-primary">Aron Bites Journal</p>
           <h1 className="text-4xl font-black mt-2">Sev Stories & Recipes</h1>
           <p className="mt-3 text-gray-600">Ideas, recipes, and stories from the world of sev and namkeen.</p>
         </header>

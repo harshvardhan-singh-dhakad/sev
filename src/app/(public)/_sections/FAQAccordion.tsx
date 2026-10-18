@@ -78,7 +78,7 @@ export function FAQAccordion({ faqs }: { faqs: FAQ[] }) {
               Frequently Asked Questions
             </h2>
             <p className="section-subheading" style={{ color: 'var(--color-ink-muted)' }}>
-              Everything you need to know about Rasvat and ordering
+              Everything you need to know about Aron Bites and ordering
             </p>
           </div>
 

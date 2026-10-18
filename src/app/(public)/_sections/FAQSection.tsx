@@ -4,8 +4,8 @@ import { FAQAccordion } from './FAQAccordion';
 const DEMO_FAQS: FAQ[] = [
   {
     id: 'f1', displayOrder: 1, active: true,
-    question: 'What varieties of Sev does Rasvat offer?',
-    answer: 'Rasvat offers a wide range of Sev including Indori Sev, Ratlami Sev, Nylon Sev, Plain Sev, Tikha Sev, Garlic Sev, Premium Sev, and Special Sev. Each variety is available in multiple weight options.',
+    question: 'What varieties of Sev does Aron Bites offer?',
+    answer: 'Aron Bites offers a wide range of Sev including Indori Sev, Ratlami Sev, Nylon Sev, Plain Sev, Tikha Sev, Garlic Sev, Premium Sev, and Special Sev. Each variety is available in multiple weight options.',
     createdAt: '', updatedAt: '',
   },
   {

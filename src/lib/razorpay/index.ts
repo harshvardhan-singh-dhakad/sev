@@ -30,13 +30,52 @@ export interface VerifyPaymentInput {
 }
 
 /**
+ * Asynchronously retrieves Razorpay credentials from Cloudflare Worker context.env
+ * or falls back to process.env for local development.
+ */
+export async function getRazorpayCredentials(): Promise<{
+  keyId: string;
+  keySecret: string;
+  webhookSecret: string;
+}> {
+  let envObj: Record<string, any> = {};
+  try {
+    const { getCloudflareContext } = await import('@opennextjs/cloudflare');
+    const ctx = await getCloudflareContext({ async: true });
+    if (ctx && ctx.env) {
+      envObj = ctx.env as Record<string, any>;
+    }
+  } catch {
+    // Non-worker execution (local Node dev or build step)
+  }
+
+  const keyId =
+    (envObj.RAZORPAY_KEY_ID as string) ||
+    (envObj.NEXT_PUBLIC_RAZORPAY_KEY_ID as string) ||
+    process.env.RAZORPAY_KEY_ID ||
+    process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
+    '';
+
+  const keySecret =
+    (envObj.RAZORPAY_KEY_SECRET as string) ||
+    process.env.RAZORPAY_KEY_SECRET ||
+    '';
+
+  const webhookSecret =
+    (envObj.RAZORPAY_WEBHOOK_SECRET as string) ||
+    process.env.RAZORPAY_WEBHOOK_SECRET ||
+    '';
+
+  return { keyId, keySecret, webhookSecret };
+}
+
+/**
  * Creates an authoritative order on Razorpay using HTTP Basic Auth.
  */
 export async function createRazorpayOrder(
   input: CreateRazorpayOrderInput
 ): Promise<RazorpayOrderResult> {
-  const keyId = process.env.RAZORPAY_KEY_ID;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  const { keyId, keySecret } = await getRazorpayCredentials();
   const mockMode = process.env.NODE_ENV !== 'production' && process.env.RAZORPAY_MOCK_MODE === 'true';
   const hasPlaceholderCredentials = [keyId, keySecret].some((value) =>
     value ? /placeholder|yourtestkey|yourwebhooksecret/i.test(value) : false
@@ -117,7 +156,8 @@ export async function computeHmacSha256Hex(payload: string, secret: string): Pro
 export async function verifyRazorpayPaymentSignature(
   input: VerifyPaymentInput
 ): Promise<boolean> {
-  const secret = input.secret || input.keySecret || process.env.RAZORPAY_KEY_SECRET;
+  const creds = await getRazorpayCredentials();
+  const secret = input.secret || input.keySecret || creds.keySecret;
 
   if (!input.orderId || !input.paymentId || !input.signature || !secret) {
     return false;
@@ -136,7 +176,8 @@ export async function verifyRazorpayWebhookSignature(
   providedSignature: string,
   webhookSecret?: string
 ): Promise<boolean> {
-  const secret = webhookSecret || process.env.RAZORPAY_WEBHOOK_SECRET;
+  const creds = await getRazorpayCredentials();
+  const secret = webhookSecret || creds.webhookSecret;
 
   if (!rawBody || !providedSignature || !secret) {
     return false;

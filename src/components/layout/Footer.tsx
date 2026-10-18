@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 const FOOTER_LINKS = {
@@ -18,7 +19,7 @@ const FOOTER_LINKS = {
     { label: 'Contact Us', href: '/contact' },
   ],
   company: [
-    { label: 'About Rasvat', href: '/about' },
+    { label: 'About Aron Bites', href: '/about' },
     { label: 'Bulk Orders', href: '/bulk-orders' },
     { label: 'Request Sample', href: '/samples' },
   ],
@@ -44,15 +45,16 @@ export function Footer() {
             {/* Logo */}
             <Link
               href="/"
-              className="inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-md w-fit"
-              aria-label="Rasvat Home"
+              className="inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-md w-fit transition-transform hover:scale-[1.02]"
+              aria-label="Aron Bites Home"
             >
-              <span
-                className="text-4xl font-extrabold tracking-tight leading-none text-[#111827]"
-                style={{ fontFamily: 'var(--font-outfit)', letterSpacing: '-0.02em' }}
-              >
-                Rasvat<span style={{ color: 'var(--color-primary-dark, #B71C1C)' }}>.</span>
-              </span>
+              <Image
+                src="/images/aronbites-logo.svg"
+                alt="Aron Bites"
+                width={160}
+                height={50}
+                className="h-12 sm:h-14 w-auto object-contain"
+              />
             </Link>
 
             {/* Tagline */}
@@ -63,10 +65,10 @@ export function Footer() {
             {/* Newsletter is hidden until a real consent and delivery provider is configured. */}
             <div className="w-full max-w-sm">
               <p className="text-sm font-semibold">Need help with an order?</p>
-              <Link href="/contact" className="mt-2 inline-block underline text-sm">Contact Rasvat support</Link>
+              <Link href="/contact" className="mt-2 inline-block underline text-sm">Contact Aron Bites support</Link>
             </div>
 
-            {/* Social links will be added after real Rasvat profiles are provided. */}
+            {/* Social links will be added after real Aron Bites profiles are provided. */}
           </div>
 
           {/* Spacer Column 6 for clean spacing on desktop */}
@@ -145,7 +147,7 @@ export function Footer() {
         {/* Bottom Bar: 1px divider, 24px top padding, copyright left, legal right */}
         <div className="pt-6 border-t border-black/20 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-black">
           <p>
-            &copy; {year} Rasvat. All rights reserved.
+            &copy; {year} Aron Bites. All rights reserved.
           </p>
 
           <div className="flex items-center gap-6">

@@ -14,8 +14,8 @@ export async function generateMetadata({ params }: OrderPageProps): Promise<Meta
   const order = await getOrderByToken(token);
 
   return {
-    title: order ? `Order ${order.order_number} | Rasvat` : 'Order Details | Rasvat',
-    description: 'Track and review your Rasvat authentic Sev order status.',
+    title: order ? `Order ${order.order_number} | Aron Bites` : 'Order Details | Aron Bites',
+    description: 'Track and review your Aron Bites authentic Sev order status.',
     robots: {
       index: false,
       follow: false,

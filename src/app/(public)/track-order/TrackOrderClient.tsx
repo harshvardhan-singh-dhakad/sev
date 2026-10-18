@@ -102,7 +102,7 @@ export default function TrackOrderClient({
             Track Your Order
           </h1>
           <p className="text-sm text-[var(--color-ink-muted)] max-w-md mx-auto">
-            Check live preparation, packaging, dispatch, and delivery updates for your fresh Rasvat parcel.
+            Check live preparation, packaging, dispatch, and delivery updates for your fresh Aron Bites parcel.
           </p>
         </div>
 
@@ -333,7 +333,7 @@ export default function TrackOrderClient({
 
               <a
                 href={`https://wa.me/919826000000?text=${encodeURIComponent(
-                  `Hi Rasvat, I need an update on my order ${tracking.order_number}`
+                  `Hi Aron Bites, I need an update on my order ${tracking.order_number}`
                 )}`}
                 target="_blank"
                 rel="noreferrer"

@@ -3,8 +3,8 @@ import PublicLayout from '@/components/layout/PublicLayout';
 import { absoluteUrl } from '@/lib/site-url';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | Rasvat Authentic Snacks',
-  description: 'Terms and conditions governing orders, deliveries, and use of Rasvat online store.',
+  title: 'Terms of Service | Aron Bites',
+  description: 'Terms and conditions governing orders, deliveries, and use of Aron Bites online store.',
   alternates: { canonical: absoluteUrl('/terms') },
 };
 
@@ -31,7 +31,7 @@ export default function TermsPage() {
               <section>
                 <h2 className="text-lg font-bold mb-2">1. Overview & Agreement</h2>
                 <p>
-                  Welcome to Rasvat. By accessing our website, browsing our namkeen & sev catalog, or placing an order, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, please do not use our services.
+                  Welcome to Aron Bites. By accessing our website, browsing our namkeen & sev catalog, or placing an order, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, please do not use our services.
                 </p>
               </section>
 
@@ -43,7 +43,7 @@ export default function TermsPage() {
               <section>
                 <h2 className="text-lg font-bold mb-2">3. Payments & Security</h2>
                 <p>
-                  Online payments are processed through Razorpay. Payment options depend on the payment methods enabled for your transaction. Rasvat does not ask for your UPI PIN or card CVV outside the payment flow.
+                  Online payments are processed through Razorpay. Payment options depend on the payment methods enabled for your transaction. Aron Bites does not ask for your UPI PIN or card CVV outside the payment flow.
                 </p>
               </section>
 
@@ -57,7 +57,7 @@ export default function TermsPage() {
               <section>
                 <h2 className="text-lg font-bold mb-2">5. Contact & Support</h2>
                 <p>
-                  For questions about an order or these terms, contact <a className="font-semibold text-[var(--color-primary)] underline" href="mailto:support@rasvat.in">support@rasvat.in</a>.
+                  For questions about an order or these terms, contact <a className="font-semibold text-[var(--color-primary)] underline" href="mailto:support@aronbites.com">support@aronbites.com</a>.
                 </p>
               </section>
             </div>

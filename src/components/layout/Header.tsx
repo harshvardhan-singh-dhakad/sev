@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { Search, User, ShoppingBag, Menu, X, ChevronDown } from 'lucide-react';
@@ -240,15 +241,17 @@ export function Header() {
             <div className="flex items-center justify-start">
               <Link
                 href="/"
-                className="inline-flex items-center h-[40px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] rounded-md"
-                aria-label="Rasvat Home"
+                className="inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] rounded-md transition-transform hover:scale-[1.02]"
+                aria-label="Aron Bites Home"
               >
-                <span
-                  className="text-[32px] font-extrabold leading-none select-none tracking-tight text-[#111827]"
-                  style={{ fontFamily: 'var(--font-outfit)' }}
-                >
-                  Rasvat<span style={{ color: 'var(--color-primary)' }}>.</span>
-                </span>
+                <Image
+                  src="/images/aronbites-logo.svg"
+                  alt="Aron Bites"
+                  width={140}
+                  height={44}
+                  priority
+                  className="h-10 sm:h-11 w-auto object-contain"
+                />
               </Link>
             </div>
 
@@ -406,15 +409,17 @@ export function Header() {
             {/* Logo Left */}
             <Link
               href="/"
-              className="inline-flex items-center h-[40px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] rounded-md"
-              aria-label="Rasvat Home"
+              className="inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] rounded-md"
+              aria-label="Aron Bites Home"
             >
-              <span
-                className="text-[26px] font-extrabold leading-none select-none tracking-tight text-[#111827]"
-                style={{ fontFamily: 'var(--font-outfit)' }}
-              >
-                Rasvat<span style={{ color: 'var(--color-primary)' }}>.</span>
-              </span>
+              <Image
+                src="/images/aronbites-logo.svg"
+                alt="Aron Bites"
+                width={120}
+                height={38}
+                priority
+                className="h-9 w-auto object-contain"
+              />
             </Link>
 
             {/* Right: Search, Cart, Hamburger */}
@@ -501,12 +506,20 @@ export function Header() {
         >
           {/* Drawer Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8F0]">
-            <span
-              className="text-2xl font-extrabold text-[#111827]"
-              style={{ fontFamily: 'var(--font-outfit)' }}
+            <Link
+              href="/"
+              onClick={() => setMobileOpen(false)}
+              className="inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] rounded-md"
+              aria-label="Aron Bites Home"
             >
-              Rasvat<span style={{ color: 'var(--color-primary)' }}>.</span>
-            </span>
+              <Image
+                src="/images/aronbites-logo.svg"
+                alt="Aron Bites"
+                width={120}
+                height={38}
+                className="h-9 w-auto object-contain"
+              />
+            </Link>
             <button
               id="mobile-menu-close-btn"
               ref={closeButtonRef}

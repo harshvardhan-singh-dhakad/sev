@@ -10,9 +10,9 @@ import { ShopFilters } from '@/components/shop/ShopFilters';
 import { absoluteUrl } from '@/lib/site-url';
 
 export const metadata: Metadata = {
-  title: 'Shop Premium Sev & Namkeen | Rasvat Authentic Snacks',
+  title: 'Shop Premium Sev & Namkeen | Aron Bites',
   description:
-    'Explore our signature collection of authentic Indori Sev, Ratlami Sev, Nylon Sev, and royal namkeen. Handcrafted in cold-pressed oil with pure stone-ground besan.',
+    'Explore our signature collection of authentic Indori Sev, Ratlami Sev, Nylon Sev, and royal namkeen from Aron Bites. Handcrafted in cold-pressed oil with pure stone-ground besan.',
   alternates: { canonical: absoluteUrl('/shop') },
 };
 

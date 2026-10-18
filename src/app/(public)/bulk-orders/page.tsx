@@ -135,7 +135,7 @@ export default function BulkOrdersPage() {
             className="text-border-dark text-base sm:text-lg md:text-xl max-w-[720px] mx-auto text-center"
             style={{ textWrap: 'balance' }}
           >
-            Partner with Rasvat for reliable bulk supply of authentic Indian Sev. Perfect for retail stores, restaurants, caterers, and distributors.
+            Partner with Aron Bites for reliable bulk supply of authentic Indian Sev. Perfect for retail stores, restaurants, caterers, and distributors.
           </p>
         </div>
       </section>
@@ -215,7 +215,7 @@ export default function BulkOrdersPage() {
                     Enquiry Submitted Successfully!
                   </h2>
                   <p className="text-ink-muted mb-8 max-w-md text-base leading-relaxed">
-                    Thank you for your interest in Rasvat. Our sales team will review your requirements and contact you within 24 business hours with a custom quote.
+                    Thank you for your interest in Aron Bites. Our sales team will review your requirements and contact you within 24 business hours with a custom quote.
                   </p>
                   <button
                     type="button"

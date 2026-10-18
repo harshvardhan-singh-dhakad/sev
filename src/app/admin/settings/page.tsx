@@ -99,7 +99,7 @@ export default function AdminSettingsPage() {
             Store Configuration & Rules
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 mt-1">
-            Global parameters for Rasvat storefront, compliance, cart rules, and B2B orders.
+            Global parameters for Aron Bites storefront, compliance, cart rules, and B2B orders.
           </p>
         </div>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -186,12 +187,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           {/* Brand stamp on desktop */}
           <div className="hidden lg:flex items-center gap-2 pr-4 border-r border-border">
-            <span
-              className="text-lg font-black tracking-tight text-ink"
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
-              RASVAT
-            </span>
+            <Image
+              src="/images/aronbites-logo.svg"
+              alt="Aron Bites"
+              width={96}
+              height={30}
+              className="h-8 w-auto object-contain"
+            />
             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-secondary text-ink uppercase tracking-wider">
               PORTAL
             </span>
@@ -314,12 +316,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="relative w-72 max-w-[85vw] h-full bg-white shadow-2xl flex flex-col z-10 p-5 overflow-y-auto">
               <div className="flex items-center justify-between pb-4 border-b border-border mb-4">
                 <div className="flex items-center gap-2">
-                  <span
-                    className="text-lg font-black tracking-tight text-ink"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                  >
-                    RASVAT
-                  </span>
+                  <Image
+                    src="/images/aronbites-logo.svg"
+                    alt="Aron Bites"
+                    width={84}
+                    height={26}
+                    className="h-7 w-auto object-contain"
+                  />
                   <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-secondary text-ink">
                     PORTAL
                   </span>

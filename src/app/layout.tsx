@@ -6,26 +6,26 @@ import { SITE_URL } from '@/lib/site-url';
 export const metadata: Metadata = {
   metadataBase: SITE_URL,
   title: {
-    default: 'Rasvat — Premium Authentic Sev',
-    template: '%s | Rasvat',
+    default: 'Aron Bites — Authentic Indian Namkeen & Snacks',
+    template: '%s | Aron Bites',
   },
   description:
-    'Rasvat offers premium quality authentic Sev — freshly packed and delivered to your doorstep. Shop retail packs, place bulk orders, or request a free sample.',
-  keywords: ['Sev', 'Indori Sev', 'Ratlami Sev', 'Nylon Sev', 'bulk sev', 'sev wholesale', 'Indian snacks'],
-  authors: [{ name: 'Rasvat' }],
-  creator: 'Rasvat',
+    'Aron Bites offers premium quality authentic snacks & Sev — freshly packed and delivered to your doorstep. Shop retail packs, place bulk orders, or request a free sample.',
+  keywords: ['Aron Bites', 'Sev', 'Indori Sev', 'Ratlami Sev', 'Nylon Sev', 'bulk snacks', 'namkeen wholesale', 'Indian snacks'],
+  authors: [{ name: 'Aron Bites' }],
+  creator: 'Aron Bites',
   openGraph: {
     type: 'website',
     locale: 'en_IN',
-    siteName: 'Rasvat',
-    title: 'Rasvat — Premium Authentic Sev',
+    siteName: 'Aron Bites',
+    title: 'Aron Bites — Authentic Indian Namkeen & Snacks',
     description:
-      'Premium quality Sev, freshly packed and delivered to your doorstep — from everyday packs to bulk quantities.',
+      'Premium quality Sev & snacks, freshly packed and delivered to your doorstep — from everyday packs to bulk quantities.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Rasvat — Premium Authentic Sev',
-    description: 'Premium quality authentic Indian Sev. Retail, bulk & samples available.',
+    title: 'Aron Bites — Authentic Indian Namkeen & Snacks',
+    description: 'Premium quality authentic Indian Sev & snacks. Retail, bulk & samples available.',
   },
   robots: {
     index: true,
@@ -42,7 +42,8 @@ export default function RootLayout({
   return (
     <html lang="en-IN">
       <head>
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/images/aronbites-logo.svg" type="image/svg+xml" />
+        <link rel="shortcut icon" href="/favicon.ico" />
       </head>
       <body>
         <Providers>{children}</Providers>

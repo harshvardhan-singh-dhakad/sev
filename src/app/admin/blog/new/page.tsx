@@ -76,7 +76,7 @@ export default function NewBlogPostPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-slate-900">New Blog Post</h1>
-            <p className="text-sm text-slate-500">Create a new article for the Rasvat blog.</p>
+            <p className="text-sm text-slate-500">Create a new article for the Aron Bites blog.</p>
           </div>
         </div>
       </div>

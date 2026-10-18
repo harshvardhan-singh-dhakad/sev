@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -108,15 +109,19 @@ function CustomerLoginForm() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         {/* Brand Header */}
         <div className="text-center">
-          <Link href="/" className="inline-flex items-center gap-2 group">
-            <span className="font-serif text-3xl font-bold tracking-tight text-amber-950 group-hover:text-amber-700 transition">
-              RASVAT
-            </span>
-            <span className="inline-block w-2 h-2 rounded-full bg-amber-600" />
+          <Link href="/" className="inline-flex items-center justify-center group" aria-label="Aron Bites Home">
+            <Image
+              src="/images/aronbites-logo.svg"
+              alt="Aron Bites"
+              width={160}
+              height={50}
+              priority
+              className="h-12 w-auto object-contain transition-transform group-hover:scale-105"
+            />
           </Link>
           <h2 className="mt-4 text-2xl font-serif font-bold text-stone-900">
             {mode === 'signin' && 'Sign in to your account'}
-            {mode === 'signup' && 'Create your Rasvat account'}
+            {mode === 'signup' && 'Create your Aron Bites account'}
             {mode === 'forgot' && 'Reset your password'}
           </h2>
           <p className="mt-1 text-sm text-stone-600">

@@ -18,8 +18,8 @@ export interface AdminStoreSettings {
 }
 
 const DEFAULT_SETTINGS: AdminStoreSettings = {
-  store_name: 'Rasvat Authentic Sev',
-  contact_email: 'support@rasvat.in',
+  store_name: 'Aron Bites',
+  contact_email: 'support@aronbites.com',
   contact_phone: '+91 98765 43210',
   address: 'Indore, Madhya Pradesh 452001, India',
   fssai_no: null,
@@ -30,7 +30,7 @@ const DEFAULT_SETTINGS: AdminStoreSettings = {
   free_shipping_above_paise: null,
   shipping_charge_paise: 5000,
   bulk_minimum_kg: 5,
-  email_sender: 'orders@rasvat.in',
+  email_sender: 'orders@aronbites.com',
 };
 
 function asNumber(value: string | undefined, fallback: number): number {

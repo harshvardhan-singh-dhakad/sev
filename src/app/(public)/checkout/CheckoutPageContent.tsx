@@ -298,7 +298,7 @@ export default function CheckoutPageContent() {
         key: data.razorpay.keyId,
         amount: data.razorpay.amount,
         currency: data.razorpay.currency || 'INR',
-        name: 'Rasvat Authentic Snacks',
+        name: 'Aron Bites',
         description: `Order #${data.order.orderNumber}`,
         order_id: data.razorpay.orderId,
         prefill: {

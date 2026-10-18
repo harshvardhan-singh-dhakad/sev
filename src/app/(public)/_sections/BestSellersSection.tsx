@@ -21,7 +21,7 @@ export async function BestSellersSection() {
               Shop Sev & Namkeen
             </h2>
             <p style={{ color: 'var(--color-ink-muted)', fontSize: '1.0625rem' }}>
-              Browse the varieties currently available in the Rasvat catalog.
+              Browse the varieties currently available in the Aron Bites catalog.
             </p>
           </div>
           <Link href="/shop" className="btn btn-outline flex-shrink-0 hover:bg-primary hover:text-white transition-all font-semibold" style={{ color: 'var(--color-ink)', borderColor: 'var(--color-border-dark)' }}>

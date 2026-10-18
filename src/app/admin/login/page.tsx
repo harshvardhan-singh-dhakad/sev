@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Lock, Mail, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -62,15 +63,25 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         {/* Brand Header */}
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <Image
+              src="/images/aronbites-logo.svg"
+              alt="Aron Bites"
+              width={140}
+              height={44}
+              priority
+              className="h-12 w-auto object-contain"
+            />
+          </div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-primary-faint text-primary-dark mb-3">
             <ShieldCheck size={14} />
             <span>Admin Control Center</span>
           </div>
           <h1
-            className="text-3xl font-black text-ink tracking-tight"
+            className="text-2xl font-black text-ink tracking-tight"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            Rasvat Portal
+            Aron Bites Portal
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Sign in to manage catalog, orders, and store operations
@@ -110,7 +121,7 @@ export default function AdminLoginPage() {
                   autoComplete="username"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@rasvat.in"
+                  placeholder="admin@aronbites.com"
                   className="w-full h-11 pl-10 pr-3 rounded-xl border border-border bg-gray-50 text-xs sm:text-sm text-ink focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 />
               </div>

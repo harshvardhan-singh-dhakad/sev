@@ -44,7 +44,7 @@ export default function AdminDashboardPage() {
             className="text-2xl sm:text-3xl lg:text-4xl font-black text-ink tracking-tight"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            Rasvat Operations Dashboard
+            Aron Bites Operations Dashboard
           </h1>
           <p className="text-xs sm:text-sm text-gray-600 mt-1 max-w-xl">
             Centralized hub for managing snack catalog, pack size pricing rules, customer enquiries, compliance, and staff access.

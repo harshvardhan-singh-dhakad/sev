@@ -70,7 +70,7 @@ export const useCartStore = create<CartStore>()(
       },
     }),
     {
-      name: 'rasvat-cart',
+      name: 'aronbites-cart',
       partialize: (state) => ({ items: state.items }),
     }
   )
@@ -146,7 +146,7 @@ export const useWishlistStore = create<WishlistStore>()(
       },
     }),
     {
-      name: 'rasvat-wishlist',
+      name: 'aronbites-wishlist',
     }
   )
 );

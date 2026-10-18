@@ -4,8 +4,8 @@ import TrackOrderClient from './TrackOrderClient';
 import { absoluteUrl } from '@/lib/site-url';
 
 export const metadata: Metadata = {
-  title: 'Track Your Order | Rasvat Authentic Snacks',
-  description: 'Track the real-time preparation, dispatch, and delivery status of your Rasvat order.',
+  title: 'Track Your Order | Aron Bites',
+  description: 'Track the real-time preparation, dispatch, and delivery status of your Aron Bites order.',
   robots: {
     index: false,
     follow: true,

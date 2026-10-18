@@ -14,7 +14,7 @@ const DEMO_REVIEWS: Review[] = [
 
     rating: 5, title: 'Absolutely loved it!',
 
-    content: 'The Indori Sev from Rasvat is exactly how I remember it from Indore. Perfect spice level, crispy, fresh. Ordered 1 KG pack and it was gone in a week!',
+    content: 'The Indori Sev from Aron Bites is exactly how I remember it from Indore. Perfect spice level, crispy, fresh. Ordered 1 KG pack and it was gone in a week!',
 
     status: 'approved', featured: true,
 
@@ -30,7 +30,7 @@ const DEMO_REVIEWS: Review[] = [
 
     rating: 5, title: 'Best bulk supplier',
 
-    content: 'We order 50 KG every month for our restaurant. Consistent quality, great pricing, and always on time. Highly recommend Rasvat for bulk buyers.',
+    content: 'We order 50 KG every month for our restaurant. Consistent quality, great pricing, and always on time. Highly recommend Aron Bites for bulk buyers.',
 
     status: 'approved', featured: true,
 

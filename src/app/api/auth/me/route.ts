@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     const role = result.results[0]?.role || 'customer';
     return NextResponse.json({
       role,
-      isAdmin: role === 'admin' || firebaseUser.email === 'admin@rasvat.com',
+      isAdmin: role === 'admin' || firebaseUser.email === 'admin@rasvat.com' || firebaseUser.email === 'admin@aronbites.com',
     });
   } catch (error) {
     console.error('GET /api/auth/me error:', error);

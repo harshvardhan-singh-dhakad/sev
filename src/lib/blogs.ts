@@ -19,7 +19,7 @@ function mapBlog(row: Record<string, unknown>): PublishedBlog {
     id: String(row.id),
     title: String(row.title),
     slug: String(row.slug),
-    author: row.author ? String(row.author) : 'Rasvat',
+    author: row.author ? String(row.author) : 'Aron Bites',
     categoryName: row.category_name ? String(row.category_name) : null,
     excerpt: row.excerpt ? String(row.excerpt) : '',
     content: String(row.content || ''),

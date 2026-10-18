@@ -4,8 +4,8 @@ import PublicLayout from '@/components/layout/PublicLayout';
 import { absoluteUrl } from '@/lib/site-url';
 
 export const metadata: Metadata = {
-  title: 'Contact Rasvat Support',
-  description: 'Get help with a Rasvat order, delivery, product question, bulk enquiry, or sample request.',
+  title: 'Contact Aron Bites Support',
+  description: 'Get help with an Aron Bites order, delivery, product question, bulk enquiry, or sample request.',
   alternates: { canonical: absoluteUrl('/contact') },
 };
 
@@ -14,12 +14,12 @@ export default function ContactPage() {
     <PublicLayout>
       <main className="container-site py-12 sm:py-16 min-h-[55vh] max-w-3xl">
         <p className="text-sm font-bold uppercase tracking-wider text-primary">We can help</p>
-        <h1 className="text-4xl font-black mt-2">Contact Rasvat</h1>
+        <h1 className="text-4xl font-black mt-2">Contact Aron Bites</h1>
         <p className="text-gray-600 mt-4">For an existing order, include your order number in your message so the team can find it quickly.</p>
         <div className="grid gap-4 sm:grid-cols-2 mt-8">
-          <a className="rounded-2xl border border-gray-200 bg-white p-6 hover:border-primary" href="mailto:support@rasvat.in">
+          <a className="rounded-2xl border border-gray-200 bg-white p-6 hover:border-primary" href="mailto:support@aronbites.com">
             <h2 className="font-bold text-lg">Email support</h2>
-            <p className="mt-2 text-primary">support@rasvat.in</p>
+            <p className="mt-2 text-primary">support@aronbites.com</p>
             <p className="mt-2 text-sm text-gray-600">Order, delivery, product, and policy questions.</p>
           </a>
           <Link className="rounded-2xl border border-gray-200 bg-white p-6 hover:border-primary" href="/track-order">

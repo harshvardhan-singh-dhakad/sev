@@ -13,7 +13,7 @@ export interface AdminUser {
   created_at: string;
 }
 
-const SESSION_COOKIE_NAME = 'rasvat_admin_session';
+const SESSION_COOKIE_NAME = 'aronbites_admin_session';
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000;
@@ -178,7 +178,8 @@ export async function destroySession(token: string): Promise<void> {
 }
 
 export async function getAuthenticatedAdmin(): Promise<AdminUser | null> {
-  const sessionCookie = (await cookies()).get(SESSION_COOKIE_NAME);
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME) || cookieStore.get('rasvat_admin_session');
   return sessionCookie?.value ? validateSessionToken(sessionCookie.value) : null;
 }
 

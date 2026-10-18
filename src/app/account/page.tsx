@@ -337,7 +337,7 @@ export default function AccountPage() {
           <div className="absolute -right-8 -top-12 -z-10 h-56 w-56 rounded-full bg-white/55 blur-3xl" />
           <div className="flex flex-col-reverse items-center justify-between gap-4 sm:flex-row">
             <div className="max-w-2xl text-center sm:text-left">
-              <p className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-white/75 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-900"><Sparkles size={13} /> Your Rasvat account</p>
+              <p className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-white/75 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-900"><Sparkles size={13} /> Your Aron Bites account</p>
               <h1 className="mt-4 text-3xl font-black tracking-tight text-amber-950 sm:text-4xl">Namaste, {user.displayName?.split(' ')[0] || 'snack lover'}!</h1>
               <p className="mt-2 max-w-lg text-sm leading-6 text-amber-950/70">Your orders, delivery updates and account details are all together here. Our little sev buddy is happy you came by.</p>
               <div className="mt-5 flex flex-wrap justify-center gap-2 sm:justify-start">
@@ -404,7 +404,7 @@ export default function AccountPage() {
               </section>
             ) : activeTab === 'orders' ? (
               <section className="space-y-4">
-                <div className="flex items-end justify-between gap-3 px-1"><div><p className="text-xs font-bold uppercase tracking-wider text-amber-700">Your Rasvat journey</p><h2 className="mt-1 text-2xl font-black">My orders</h2></div><button type="button" onClick={() => void loadOrders()} disabled={ordersLoading} className="inline-flex items-center gap-1.5 rounded-xl border border-orange-200 bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-orange-50 disabled:opacity-50"><RefreshCw size={13} className={ordersLoading ? 'animate-spin' : ''} />Refresh</button></div>
+                <div className="flex items-end justify-between gap-3 px-1"><div><p className="text-xs font-bold uppercase tracking-wider text-amber-700">Your Aron Bites journey</p><h2 className="mt-1 text-2xl font-black">My orders</h2></div><button type="button" onClick={() => void loadOrders()} disabled={ordersLoading} className="inline-flex items-center gap-1.5 rounded-xl border border-orange-200 bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-orange-50 disabled:opacity-50"><RefreshCw size={13} className={ordersLoading ? 'animate-spin' : ''} />Refresh</button></div>
                 {ordersError && <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">{ordersError} <button type="button" onClick={() => void loadOrders()} className="ml-1 font-bold underline">Try again</button></div>}
                 {ordersLoading ? <div className="rounded-3xl border border-orange-100 bg-white p-10 text-center text-sm text-stone-500"><RefreshCw size={22} className="mx-auto mb-3 animate-spin text-amber-700" />Finding your orders…</div> : orders.length ? orders.map((order) => <OrderCard key={order.id} order={order} />) : !ordersError ? (
                   <div className="rounded-3xl border border-orange-100 bg-white px-6 py-8 text-center shadow-sm sm:px-10">
@@ -432,7 +432,7 @@ export default function AccountPage() {
           <aside className="space-y-4">
             <section className="rounded-3xl border border-orange-100 bg-white p-5 shadow-sm">
               <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0"><p className="text-[10px] font-black uppercase tracking-wider text-amber-700">Snack club member</p><h2 className="mt-1 truncate text-lg font-black">{user.displayName || 'Rasvat friend'}</h2><p className="mt-1 truncate text-xs text-stone-500">{user.email}</p></div>
+                <div className="min-w-0"><p className="text-[10px] font-black uppercase tracking-wider text-amber-700">Snack club member</p><h2 className="mt-1 truncate text-lg font-black">{user.displayName || 'Aron Bites friend'}</h2><p className="mt-1 truncate text-xs text-stone-500">{user.email}</p></div>
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-amber-300 bg-amber-100 text-lg font-black text-amber-900">{(user.displayName || user.email || 'R')[0].toUpperCase()}</span>
               </div>
               <div className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800"><ShieldCheck size={15} />Your account is signed in</div>
@@ -442,7 +442,7 @@ export default function AccountPage() {
             <section className="rounded-3xl bg-amber-950 p-5 text-amber-50 shadow-sm">
               <div className="flex items-center gap-2 text-sm font-bold"><CircleHelp size={17} className="text-amber-300" />Need a little help?</div>
               <p className="mt-2 text-xs leading-5 text-amber-100/75">We’re happy to help with an order, delivery or anything tasty.</p>
-              <a href="tel:+919876543210" className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-3 py-2.5 text-xs font-bold text-white transition hover:bg-amber-400"><PhoneCall size={14} />Call Rasvat support</a>
+              <a href="tel:+919876543210" className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-3 py-2.5 text-xs font-bold text-white transition hover:bg-amber-400"><PhoneCall size={14} />Call Aron Bites support</a>
               <Link href="/track-order" className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-700 px-3 py-2.5 text-xs font-bold text-amber-50 transition hover:bg-amber-900"><Clock3 size={14} />Track an order</Link>
             </section>
 
@@ -455,7 +455,7 @@ export default function AccountPage() {
           </aside>
         </div>
 
-        <footer className="border-t border-orange-100 pt-5 text-center text-[11px] text-stone-400">Thanks for being part of the Rasvat family. Made fresh, packed with love. <span aria-hidden="true">♥</span></footer>
+        <footer className="border-t border-orange-100 pt-5 text-center text-[11px] text-stone-400">Thanks for being part of the Aron Bites family. Made fresh, packed with love. <span aria-hidden="true">♥</span></footer>
       </div>
       <style jsx>{`@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }`}</style>
     </div>

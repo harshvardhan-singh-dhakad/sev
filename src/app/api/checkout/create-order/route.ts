@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPendingOrder, attachRazorpayOrderId } from '@/lib/orders';
-import { createRazorpayOrder } from '@/lib/razorpay';
+import { createRazorpayOrder, getRazorpayCredentials } from '@/lib/razorpay';
 
 const INDIAN_PHONE_REGEX = /^[6-9]\d{9}$/;
 const PINCODE_REGEX = /^[1-9][0-9]{5}$/;
@@ -128,8 +128,9 @@ export async function POST(request: NextRequest) {
 
       await attachRazorpayOrderId(order.id, razorpayOrder.id);
 
+      const { keyId } = await getRazorpayCredentials();
       razorpayData = {
-        keyId: process.env.RAZORPAY_KEY_ID || '',
+        keyId,
         orderId: razorpayOrder.id,
         amount: razorpayOrder.amount,
         currency: razorpayOrder.currency,

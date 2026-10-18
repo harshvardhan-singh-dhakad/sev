@@ -13,8 +13,6 @@ export async function POST(request: NextRequest) {
     // 1. Read raw body as text for cryptographic HMAC verification
     const rawBody = await request.text();
     const signature = request.headers.get('x-razorpay-signature');
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
-
     if (!signature) {
       return NextResponse.json(
         { error: 'Missing x-razorpay-signature header' },
@@ -23,7 +21,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Timing-safe cryptographic HMAC-SHA256 signature verification via Web Crypto
-    const isValid = await verifyRazorpayWebhookSignature(rawBody, signature, webhookSecret);
+    const isValid = await verifyRazorpayWebhookSignature(rawBody, signature);
     if (!isValid) {
       console.error('Razorpay Webhook: Invalid signature received');
       return NextResponse.json(

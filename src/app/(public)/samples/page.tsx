@@ -59,7 +59,7 @@ export default function SamplesPage() {
             Try Before You Buy
           </h1>
           <p className="text-slate-600 text-lg">
-            Are you a retailer or distributor looking to place a bulk order? Request a free sample box to experience the quality and crunch of Rasvat Sev firsthand.
+            Are you a retailer or distributor looking to place a bulk order? Request a free sample box to experience the quality and crunch of Aron Bites Sev firsthand.
           </p>
         </div>
       </div>
