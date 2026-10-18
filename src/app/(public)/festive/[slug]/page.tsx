@@ -14,9 +14,10 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import PublicLayout from '@/components/layout/PublicLayout';
-import { getFestivalBySlug, listActiveFestivals } from '@/lib/festivals';
+import { getFestivalBySlug, listActiveFestivals, listGiftBoxes } from '@/lib/festivals';
 import { listProducts } from '@/lib/catalog';
 import { ShopProductCard } from '@/components/shop/ShopProductCard';
+import { GiftBoxCard } from '@/components/festive/GiftBoxCard';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -53,6 +54,7 @@ export default async function FestivalLandingPage({ params }: Props) {
 
   // Get active catalog products for gifting hampers
   const { products } = listProducts({ status: 'active' }, 'popular', 1, 8);
+  const giftBoxes = await listGiftBoxes(festival.id, true);
   const otherFestivals = (await listActiveFestivals()).filter((f) => f.slug !== festival.slug);
 
   const themeColor = festival.themeColor || '#b45309';
@@ -154,20 +156,46 @@ export default async function FestivalLandingPage({ params }: Props) {
         </div>
       </section>
 
-      {/* Gift Hamper Products Grid */}
-      <section id="gift-collection" className="container-site py-16 sm:py-20">
-        <div className="text-center max-w-2xl mx-auto mb-12">
+      {/* Curated Festive Gift Boxes Section */}
+      {giftBoxes.length > 0 && (
+        <section id="gift-collection" className="container-site py-16 sm:py-20">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200 inline-block">
+              🎁 Exclusive Festive Hampers
+            </span>
+            <h2
+              className="text-2xl sm:text-4xl font-black text-slate-900 mt-2.5 mb-3"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              Curated {festival.name} Gift Boxes
+            </h2>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Complete celebratory hampers with custom festive box packaging, assorted Malwa snacks, and your personalized greeting postcard enclosed inside.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {giftBoxes.map((box) => (
+              <GiftBoxCard key={box.id} box={box} festivalSlug={festival.slug} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Individual Snack Assortments Grid */}
+      <section className="container-site py-12 border-t border-slate-100">
+        <div className="text-center max-w-2xl mx-auto mb-10">
           <span className="text-xs font-bold uppercase tracking-wider text-primary">
-            Curated Festive Hampers
+            Individual Snacks & Savories
           </span>
           <h2
-            className="text-2xl sm:text-4xl font-black text-slate-900 mt-2 mb-3"
+            className="text-xl sm:text-3xl font-black text-slate-900 mt-2 mb-2"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            Signature Indore Festive Assortments
+            Create Your Custom Assortment
           </h2>
-          <p className="text-sm text-slate-600 leading-relaxed">
-            Freshly prepared with pure stone-ground besan, aromatic cloves, and zero artificial preservatives. Nitrogen flushed for maximum crunch.
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+            Freshly prepared with pure stone-ground besan, aromatic cloves, and zero artificial preservatives.
           </p>
         </div>
 

@@ -175,6 +175,27 @@ export async function createPendingOrder(input: CreatePendingOrderInput): Promis
       }
     }
 
+    // If not found in product_variants, check festive_gift_boxes
+    if (!foundVariant) {
+      const dbBox = await orderDbQueryFirst<any>(
+        `SELECT * FROM festive_gift_boxes WHERE id = ? AND is_active = 1`,
+        [itemInput.variantId]
+      );
+      if (dbBox) {
+        foundProduct = { slug: dbBox.slug, name: dbBox.title };
+        foundVariant = {
+          id: dbBox.id,
+          label: dbBox.weight_label || 'Festive Gift Box',
+          weight_grams: 1000,
+          price: Number(dbBox.price_paise || 0),
+          min_qty: 1,
+          max_qty: null,
+          step: 1,
+          is_active: Boolean(dbBox.is_active),
+        };
+      }
+    }
+
     if (!foundProduct || !foundVariant) {
       throw new Error(`Variant not found in active catalog: ${itemInput.variantId}`);
     }
