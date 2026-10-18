@@ -23,6 +23,9 @@ import {
   Package,
   Tag,
   Check,
+  UploadCloud,
+  Loader2,
+  Image as ImageIcon,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { FestivalRecord, GiftBoxRecord } from '@/lib/festivals';
@@ -78,6 +81,56 @@ export default function AdminFestivalsPage() {
   const [boxBadge, setBoxBadge] = useState('Bestseller');
   const [boxIsActive, setBoxIsActive] = useState(true);
   const [savingBox, setSavingBox] = useState(false);
+
+  // Direct Upload State
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [uploadingBoxImage, setUploadingBoxImage] = useState(false);
+
+  async function handleUploadBannerFile(file: File) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Banner image must be 5 MB or smaller');
+      return;
+    }
+    setUploadingBanner(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('altText', formName.trim() || 'Festival Banner');
+      const res = await fetch('/api/admin/media', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to upload banner');
+      setFormBannerUrl(data.media.url);
+      toast.success('Festival poster uploaded successfully!');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Banner upload failed');
+    } finally {
+      setUploadingBanner(false);
+    }
+  }
+
+  async function handleUploadBoxImageFile(file: File) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Box image must be 5 MB or smaller');
+      return;
+    }
+    setUploadingBoxImage(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('altText', boxTitle.trim() || 'Gift Box Photo');
+      const res = await fetch('/api/admin/media', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to upload box image');
+      setBoxImageUrl(data.media.url);
+      toast.success('Gift box photo uploaded successfully!');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Box photo upload failed');
+    } finally {
+      setUploadingBoxImage(false);
+    }
+  }
 
   // Load Festivals
   async function loadFestivals() {
@@ -931,17 +984,80 @@ export default function AdminFestivalsPage() {
                   </div>
                 </div>
 
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                    Banner Design / Image URL (Optional)
-                  </label>
-                  <input
-                    type="url"
-                    value={formBannerUrl}
-                    onChange={(e) => setFormBannerUrl(e.target.value)}
-                    placeholder="https://... or upload from Media Library"
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  />
+                <div className="sm:col-span-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Festival Banner / Poster Design
+                    </label>
+                    <span className="text-[11px] text-slate-500">Auto R2 upload & link generator</span>
+                  </div>
+
+                  {/* Image Preview if available */}
+                  {formBannerUrl && (
+                    <div className="relative rounded-2xl overflow-hidden border border-amber-200 bg-amber-50/50 p-2 flex items-center gap-4">
+                      <div className="relative w-32 h-20 rounded-xl overflow-hidden bg-slate-900/10 shrink-0 border border-slate-200">
+                        <img
+                          src={formBannerUrl}
+                          alt="Banner Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-bold">
+                          <CheckCircle2 size={14} /> Active Banner Poster
+                        </div>
+                        <p className="text-[11px] text-slate-500 truncate font-mono mt-0.5">
+                          {formBannerUrl}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setFormBannerUrl('')}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+                        title="Remove image"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Direct File Upload Dropzone Button */}
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <label className="flex-1 cursor-pointer flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-amber-300 hover:border-amber-500 rounded-2xl bg-amber-50/40 hover:bg-amber-50 text-xs font-bold text-amber-900 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        disabled={uploadingBanner}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) void handleUploadBannerFile(file);
+                        }}
+                      />
+                      {uploadingBanner ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin text-amber-600" />
+                          <span>Uploading Poster to R2 Storage...</span>
+                        </>
+                      ) : (
+                        <>
+                          <UploadCloud size={16} className="text-amber-700" />
+                          <span>Direct File Upload (Click to choose Poster image)</span>
+                        </>
+                      )}
+                    </label>
+                  </div>
+
+                  {/* Manual / Automatic Link input */}
+                  <div>
+                    <input
+                      type="url"
+                      value={formBannerUrl}
+                      onChange={(e) => setFormBannerUrl(e.target.value)}
+                      placeholder="Automatic CDN URL (or paste external image link here)"
+                      className="w-full px-4 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-slate-600"
+                    />
+                  </div>
                 </div>
 
                 <div className="sm:col-span-2">
@@ -1139,17 +1255,80 @@ export default function AdminFestivalsPage() {
                   />
                 </div>
 
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                    Image / Box Design URL (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={boxImageUrl}
-                    onChange={(e) => setBoxImageUrl(e.target.value)}
-                    placeholder="https://... or /images/placeholder-sev.svg"
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  />
+                <div className="sm:col-span-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Gift Box Photo / Packaging Design
+                    </label>
+                    <span className="text-[11px] text-slate-500">Auto R2 upload & link generator</span>
+                  </div>
+
+                  {/* Image Preview if available */}
+                  {boxImageUrl && (
+                    <div className="relative rounded-2xl overflow-hidden border border-amber-200 bg-amber-50/50 p-2 flex items-center gap-4">
+                      <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-white shrink-0 border border-slate-200 p-1">
+                        <img
+                          src={boxImageUrl}
+                          alt="Box Preview"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-bold">
+                          <CheckCircle2 size={14} /> Active Box Photo
+                        </div>
+                        <p className="text-[11px] text-slate-500 truncate font-mono mt-0.5">
+                          {boxImageUrl}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setBoxImageUrl('')}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+                        title="Remove image"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Direct File Upload Dropzone Button */}
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <label className="flex-1 cursor-pointer flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-amber-300 hover:border-amber-500 rounded-2xl bg-amber-50/40 hover:bg-amber-50 text-xs font-bold text-amber-900 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        disabled={uploadingBoxImage}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) void handleUploadBoxImageFile(file);
+                        }}
+                      />
+                      {uploadingBoxImage ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin text-amber-600" />
+                          <span>Uploading Photo to R2 Storage...</span>
+                        </>
+                      ) : (
+                        <>
+                          <UploadCloud size={16} className="text-amber-700" />
+                          <span>Direct File Upload (Click to choose Box photo)</span>
+                        </>
+                      )}
+                    </label>
+                  </div>
+
+                  {/* Manual / Automatic Link input */}
+                  <div>
+                    <input
+                      type="text"
+                      value={boxImageUrl}
+                      onChange={(e) => setBoxImageUrl(e.target.value)}
+                      placeholder="Automatic CDN URL (or paste external image link here)"
+                      className="w-full px-4 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-slate-600"
+                    />
+                  </div>
                 </div>
 
                 <div className="sm:col-span-2">

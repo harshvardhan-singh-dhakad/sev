@@ -126,6 +126,7 @@ export interface OrderItemInput {
   productId?: string;
   variantId: string;
   qty: number;
+  packLabel?: string;
 }
 
 export interface CreatePendingOrderInput {

@@ -123,6 +123,7 @@ export async function POST(request: NextRequest) {
       items: items.map((i: any) => ({
         variantId: i.variantId,
         qty: Math.floor(i.qty),
+        packLabel: i.packLabel || i.variantName || undefined,
       })),
       notes: notes ? String(notes).trim() : null,
       isGift: Boolean(isGift),

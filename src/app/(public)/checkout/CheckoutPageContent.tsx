@@ -333,6 +333,7 @@ export default function CheckoutPageContent() {
           items: items.map((i) => ({
             variantId: i.variantId,
             qty: i.quantity,
+            packLabel: i.variantName,
           })),
           notes: notes.trim() || null,
           isGift,

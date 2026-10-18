@@ -226,7 +226,7 @@ export async function createPendingOrder(input: CreatePendingOrderInput): Promis
       product_id: foundProduct.slug,
       variant_id: foundVariant.id,
       product_name: foundProduct.name,
-      pack_label: foundVariant.label,
+      pack_label: itemInput.packLabel || foundVariant.label,
       weight_grams: foundVariant.weight_grams,
       unit_price: unitPrice,
       qty: itemInput.qty,

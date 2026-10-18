@@ -18,6 +18,7 @@ import { getFestivalBySlug, listActiveFestivals, listGiftBoxes } from '@/lib/fes
 import { listProducts } from '@/lib/catalog';
 import { ShopProductCard } from '@/components/shop/ShopProductCard';
 import { GiftBoxCard } from '@/components/festive/GiftBoxCard';
+import { CustomBoxBuilder } from '@/components/festive/CustomBoxBuilder';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -52,8 +53,8 @@ export default async function FestivalLandingPage({ params }: Props) {
     notFound();
   }
 
-  // Get active catalog products for gifting hampers
-  const { products } = listProducts({ status: 'active' }, 'popular', 1, 8);
+  // Get active catalog products for gifting hampers and custom builder
+  const { products } = listProducts({ status: 'active' }, 'popular', 1, 24);
   const giftBoxes = await listGiftBoxes(festival.id, true);
   const otherFestivals = (await listActiveFestivals()).filter((f) => f.slug !== festival.slug);
 
@@ -100,7 +101,14 @@ export default async function FestivalLandingPage({ params }: Props) {
               className="btn btn-lg h-[52px] px-8 text-sm font-bold bg-white text-slate-900 hover:bg-amber-100 shadow-xl inline-flex items-center gap-2"
             >
               <Gift size={18} className="text-amber-600" />
-              Explore Festive Hampers
+              Explore Hampers
+            </a>
+            <a
+              href="#custom-box-builder"
+              className="btn btn-lg h-[52px] px-7 text-sm font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-xl inline-flex items-center gap-2"
+            >
+              <Sparkles size={18} className="text-slate-950" />
+              Make Your Own Box
             </a>
             <Link
               href={`/checkout?gift=1&festival=${festival.slug}`}
@@ -181,6 +189,13 @@ export default async function FestivalLandingPage({ params }: Props) {
           </div>
         </section>
       )}
+
+      {/* Interactive Build Your Own Box / Custom Hamper Builder */}
+      <CustomBoxBuilder
+        products={products}
+        festivalName={festival.name}
+        festivalSlug={festival.slug}
+      />
 
       {/* Individual Snack Assortments Grid */}
       <section className="container-site py-12 border-t border-slate-100">
