@@ -67,6 +67,20 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-48x48.png', sizes: '48x48', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/android-chrome-192x192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+  },
+  manifest: '/site.webmanifest',
   other: {
     'geo.region': 'IN-MP',
     'geo.placename': 'Indore',
@@ -87,8 +101,20 @@ export default function RootLayout({
   return (
     <html lang="en-IN">
       <head>
-        <link rel="icon" href="/images/aronbites-logo.svg" type="image/svg+xml" />
-        <link rel="shortcut icon" href="/favicon.ico" />
+        {/* Favicons & App Icons for Google SERP & All Browsers */}
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/site.webmanifest" />
+        <meta name="theme-color" content="#B61E01" />
+        <meta name="msapplication-TileColor" content="#B61E01" />
+        <meta name="msapplication-TileImage" content="/android-chrome-192x192.png" />
+
+        {/* AI & Knowledge Base Links */}
         <link rel="alternate" type="text/markdown" href="/llms.txt" title="Aron Bites AI Context" />
         <link rel="alternate" type="text/markdown" href="/llms-full.txt" title="Aron Bites Full AI Knowledge Base" />
         <link rel="help" href="/llms.txt" title="AI Documentation" />
