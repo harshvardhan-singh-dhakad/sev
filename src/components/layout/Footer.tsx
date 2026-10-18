@@ -49,10 +49,10 @@ export function Footer() {
               aria-label="Aron Bites Home"
             >
               <Image
-                src="/images/aronbites-logo.svg"
+                src="/images/aronbites-logo.webp"
                 alt="Aron Bites"
-                width={160}
-                height={50}
+                width={149}
+                height={88}
                 className="h-12 sm:h-14 w-auto object-contain"
               />
             </Link>

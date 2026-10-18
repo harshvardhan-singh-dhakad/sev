@@ -111,10 +111,10 @@ function CustomerLoginForm() {
         <div className="text-center">
           <Link href="/" className="inline-flex items-center justify-center group" aria-label="Aron Bites Home">
             <Image
-              src="/images/aronbites-logo.svg"
+              src="/images/aronbites-logo.webp"
               alt="Aron Bites"
-              width={160}
-              height={50}
+              width={149}
+              height={88}
               priority
               className="h-12 w-auto object-contain transition-transform group-hover:scale-105"
             />

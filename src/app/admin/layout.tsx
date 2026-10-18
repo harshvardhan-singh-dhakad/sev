@@ -188,10 +188,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Brand stamp on desktop */}
           <div className="hidden lg:flex items-center gap-2 pr-4 border-r border-border">
             <Image
-              src="/images/aronbites-logo.svg"
+              src="/images/aronbites-logo.webp"
               alt="Aron Bites"
-              width={96}
-              height={30}
+              width={149}
+              height={88}
               className="h-8 w-auto object-contain"
             />
             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-secondary text-ink uppercase tracking-wider">
@@ -317,10 +317,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <div className="flex items-center justify-between pb-4 border-b border-border mb-4">
                 <div className="flex items-center gap-2">
                   <Image
-                    src="/images/aronbites-logo.svg"
+                    src="/images/aronbites-logo.webp"
                     alt="Aron Bites"
-                    width={84}
-                    height={26}
+                    width={149}
+                    height={88}
                     className="h-7 w-auto object-contain"
                   />
                   <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-secondary text-ink">

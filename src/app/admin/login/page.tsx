@@ -65,10 +65,10 @@ export default function AdminLoginPage() {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <Image
-              src="/images/aronbites-logo.svg"
+              src="/images/aronbites-logo.webp"
               alt="Aron Bites"
-              width={140}
-              height={44}
+              width={149}
+              height={88}
               priority
               className="h-12 w-auto object-contain"
             />
