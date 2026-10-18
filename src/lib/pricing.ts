@@ -1,5 +1,5 @@
 /**
- * Rasvat Pure Pricing Module
+ * Aron Bites Pure Pricing Module
  * Strictly operates on integer paise (1 INR = 100 paise) and integer grams.
  * Pure functions with zero side effects.
  */

@@ -1,5 +1,5 @@
 /**
- * Rasvat Catalog Module
+ * Aron Bites Catalog Module
  * The SINGLE authoritative entry point for pages and components to access product data.
  * All seed data is encapsulated behind this interface.
  */

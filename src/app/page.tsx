@@ -30,10 +30,56 @@ export default async function HomePage() {
   );
   const websiteJsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'Aron Bites',
-    url: absoluteUrl('/'),
-    inLanguage: 'en-IN',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': absoluteUrl('/#website'),
+        name: 'Aron Bites',
+        url: absoluteUrl('/'),
+        inLanguage: 'en-IN',
+        description: 'Authentic Indian Sev, Namkeen & Heritage Snacks delivered fresh across India.',
+        publisher: { '@id': absoluteUrl('/#organization') },
+      },
+      {
+        '@type': ['Organization', 'OnlineStore', 'FoodEstablishment'],
+        '@id': absoluteUrl('/#organization'),
+        name: 'Aron Bites',
+        alternateName: ['AronBites', 'Aron Bites Authentic Sev'],
+        url: absoluteUrl('/'),
+        logo: absoluteUrl('/images/aronbites-logo.svg'),
+        image: absoluteUrl('/images/Aron-bites-512x512.png'),
+        description:
+          'Premier Indian manufacturer of authentic Indori Sev, Ratlami Sev, and Malwa namkeen snacks. Retail delivery and bulk supply.',
+        email: 'support@aronbites.com',
+        telephone: '+91-9876543210',
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: 'Indore',
+          addressLocality: 'Indore',
+          addressRegion: 'Madhya Pradesh',
+          postalCode: '452001',
+          addressCountry: 'IN',
+        },
+        geo: {
+          '@type': 'GeoCoordinates',
+          latitude: 22.7196,
+          longitude: 75.8577,
+        },
+        areaServed: {
+          '@type': 'Country',
+          name: 'India',
+        },
+        priceRange: '₹₹',
+        contactPoint: {
+          '@type': 'ContactPoint',
+          telephone: '+91-9876543210',
+          contactType: 'customer service',
+          email: 'support@aronbites.com',
+          areaServed: 'IN',
+          availableLanguage: ['en', 'hi'],
+        },
+      },
+    ],
   };
 
   return (

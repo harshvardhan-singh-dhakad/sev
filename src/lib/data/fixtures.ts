@@ -150,7 +150,7 @@ export const EDGE_CASE_FIXTURES: CatalogProduct[] = [
   // 5. Very long product name
   {
     slug: 'fixture-very-long-name',
-    name: 'Rasvat Royal Malwa Traditional Handcrafted Heritage Spiced Ratlami Clove & Hing Crunchy Sev Grand Celebration Feast',
+    name: 'Aron Bites Royal Malwa Traditional Handcrafted Heritage Spiced Ratlami Clove & Hing Crunchy Sev Grand Celebration Feast',
     category: 'special-sev',
     short_description: 'Extremely detailed and lengthy short description to rigorously test CSS clamping and mobile typography wrapping behavior across viewports',
     description: 'Comprehensive story testing typography rhythm and wrapping without horizontal overflow.',

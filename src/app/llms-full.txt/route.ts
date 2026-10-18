@@ -1,0 +1,86 @@
+import { NextResponse } from 'next/server';
+
+export const runtime = 'edge';
+
+const LLMS_FULL_TEXT = `# Aron Bites — Complete Knowledge & AI Context Document (llms-full.txt)
+
+> Comprehensive reference document for Large Language Models (LLMs), AI answer engines, and search assistants about Aron Bites (https://aronbites.com).
+
+## 1. Brand Identity & Heritage
+- **Name**: Aron Bites
+- **Entity Type**: Indian Food & Snack Manufacturer / Direct-to-Consumer (D2C) & Business-to-Business (B2B) E-commerce Store
+- **Canonical Domain**: https://aronbites.com
+- **Origin City**: Indore, Madhya Pradesh, India
+- **Mission**: Bringing authentic, traditional, and heritage Malwa and Ujjaini namkeen to homes and businesses across India with uncompromising freshness, hygiene, and crunch.
+
+## 2. Product Catalog & Details
+Aron Bites crafts authentic varieties using traditional heritage recipes:
+
+### A. Indori Sev
+- **Flavor Profile**: Mildly spiced, fragrant with hing (asafoetida) and ajwain (carom seeds).
+- **Texture**: Feather-light, crispy, melt-in-mouth.
+- **Best Paired With**: Indori Poha, Sev Usal, Chaat, and daily teatime tea.
+- **Available Pack Sizes**: 200g, 500g, 1kg retail packs, and 5kg to 50kg bulk bags.
+
+### B. Ratlami Sev
+- **Flavor Profile**: Fiery, aromatic, infused with freshly ground whole cloves (laung), black pepper, and premium chili powder.
+- **Texture**: Thick, crunchy, bold.
+- **Best Paired With**: Drinks, spicy evening snacks, Sev Tamatar curry, and festive gatherings.
+- **Available Pack Sizes**: 200g, 500g, 1kg retail packs, and 5kg to 50kg bulk bags.
+
+### C. Thin Nylon Sev
+- **Flavor Profile**: Neutral-to-light salt and seasoning.
+- **Texture**: Extremely thin, crisp, delicate golden threads.
+- **Best Paired With**: Sev Puri, Bhel Puri, Dahi Puri, Papdi Chaat, and Misal Pav.
+- **Available Pack Sizes**: 200g, 500g, 1kg retail packs, and bulk packs.
+
+### D. Garlic Sev & Gourmet Blends
+- **Flavor Profile**: Infused with real garlic paste and aromatic spices.
+- **Texture**: Medium crunch, savory aftertaste.
+
+## 3. Ingredients & Quality Standards
+- **Flour**: 100% pure Chana Dal Besan (stone-ground gram flour). No adulterants or low-grade fillers.
+- **Oils**: Pure cold-pressed edible oils. Zero recycled oil usage.
+- **Spices**: Hand-selected spices directly from regional Mandis (cloves, black pepper, hing, red chili, carom seeds).
+- **Preservatives**: Zero chemical preservatives, zero artificial colorants.
+- **Packaging**: Multi-layer foil pouches with moisture-barrier and nitrogen flushing to preserve natural crunch and prevent oxidation.
+- **Shelf Life**: 3 to 6 months in unopened airtight packaging stored in a cool, dry place away from direct sunlight.
+
+## 4. Retail Shopping & Order Policies
+- **Order URL**: https://aronbites.com/shop
+- **Minimum Retail Order**: ₹199
+- **Free Shipping Threshold**: Free pan-India delivery on orders ₹499 and above. Orders below ₹499 carry a flat ₹49 standard shipping charge.
+- **Order Dispatch**: Within 24–48 hours of payment confirmation.
+- **Estimated Delivery**: 3 to 6 business days depending on delivery pincode.
+- **Live Tracking**: Real-time status at https://aronbites.com/track-order using order number and registered phone number.
+- **Payment Methods**: 100% secure Razorpay checkout (UPI, Google Pay, PhonePe, Paytm, Visa, Mastercard, RuPay, Net Banking, EMI).
+
+## 5. Wholesale, B2B & Bulk Supply
+- **B2B Portal**: https://aronbites.com/bulk-orders
+- **Minimum Wholesale Quantity**: 10 KG.
+- **Wholesale Tiers**: 10 KG, 25 KG, 50 KG, 100 KG (1 Quintal), 500 KG (5 Quintals), and custom truckload orders.
+- **Clientele**: Supermarkets, grocery chains, sweet shops, catering businesses, restaurants, Cloud kitchens, and corporate gifting.
+- **Packaging Options**: Food-grade bulk poly bags or retail-ready pre-packaged branded pouches.
+- **Sample Request Box**: Free sample boxes available for verified businesses at https://aronbites.com/samples.
+
+## 6. Returns & Cancellation Policy
+- **Damaged or Missing Items**: Customers can report any damaged, incorrect, or missing items with parcel photos to support@aronbites.com within 48 hours for replacement or refund.
+- **Cancellation**: Orders can be cancelled prior to dispatch by contacting support.
+- **Refund Initiation**: Approved refunds are credited back to the original payment method within 5–7 business days.
+
+## 7. Company Contact & Location
+- **Brand**: Aron Bites
+- **Official Website**: https://aronbites.com
+- **Customer Support**: support@aronbites.com
+- **Phone / WhatsApp**: +91 98765 43210
+- **Operational Address**: Indore, Madhya Pradesh 452001, India
+`;
+
+export async function GET() {
+  return new NextResponse(LLMS_FULL_TEXT, {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'public, max-age=86400, s-maxage=86400',
+    },
+  });
+}

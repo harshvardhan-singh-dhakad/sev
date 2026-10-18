@@ -27,6 +27,15 @@ export const metadata: Metadata = {
     title: 'Aron Bites — Authentic Indian Namkeen & Snacks',
     description: 'Premium quality authentic Indian Sev & snacks. Retail, bulk & samples available.',
   },
+  alternates: {
+    canonical: SITE_URL.href,
+  },
+  other: {
+    'geo.region': 'IN-MP',
+    'geo.placename': 'Indore',
+    'geo.position': '22.7196;75.8577',
+    'ICBM': '22.7196, 75.8577',
+  },
   robots: {
     index: true,
     follow: true,
@@ -44,6 +53,7 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/images/aronbites-logo.svg" type="image/svg+xml" />
         <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="alternate" type="text/markdown" href="/llms.txt" title="Aron Bites AI Context" />
       </head>
       <body>
         <Providers>{children}</Providers>

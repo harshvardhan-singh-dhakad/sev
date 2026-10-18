@@ -1,5 +1,5 @@
 /**
- * Rasvat Auth & Permission Matrix
+ * Aron Bites Auth & Permission Matrix
  * Defined in ONE authoritative place and strictly enforced on the server.
  */
 
