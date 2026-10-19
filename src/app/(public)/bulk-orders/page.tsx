@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Truck, Store, MapPin, Building2, CheckCircle2, ChevronDown } from 'lucide-react';
 import PublicLayout from '@/components/layout/PublicLayout';
 import toast from 'react-hot-toast';
+import { FaqAccordionSection } from '@/components/ui/FaqAccordionSection';
+import { BULK_FAQS } from './bulk-faq-data';
 
 const FEATURES = [
   { icon: Truck, title: 'Reliable Pan-India Delivery', desc: 'Timely dispatch and secure logistics across the country.' },
@@ -520,6 +522,21 @@ export default function BulkOrdersPage() {
 
         </div>
       </section>
+
+      {/* 15 B2B & Wholesale FAQs for SEO/GEO/AEO */}
+      <FaqAccordionSection
+        id="bulk-wholesale-faqs"
+        badge="B2B & Wholesale FAQs"
+        title="Frequently Asked Questions by Commercial Buyers"
+        subtitle="Detailed answers regarding wholesale rates, Minimum Order Quantities (MOQ), road transport logistics, GST invoices, and custom packaging."
+        faqs={BULK_FAQS}
+        searchPlaceholder="Search wholesale questions (e.g. MOQ, GST, freight, shelf life, samples)..."
+        ctaTitle="Need a Custom Contract Quotation or Truckload Delivery?"
+        ctaDescription="Our Indore B2B commercial desk coordinates directly with restaurants, halwais, sweet shops, and corporate buyers."
+        ctaPrimaryLink={{ text: 'Call B2B Helpline', href: 'tel:+916267847718' }}
+        ctaSecondaryLink={{ text: 'Request Free Samples', href: '/samples' }}
+        className="bg-bg border-t border-border"
+      />
     </PublicLayout>
   );
 }

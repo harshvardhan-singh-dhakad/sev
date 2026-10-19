@@ -8,12 +8,31 @@ import { getStorefrontCategories, listStorefrontProducts, type StorefrontSort } 
 import { ShopProductCard } from '@/components/shop/ShopProductCard';
 import { ShopFilters } from '@/components/shop/ShopFilters';
 import { absoluteUrl } from '@/lib/site-url';
+import { FaqAccordionSection } from '@/components/ui/FaqAccordionSection';
+import { SHOP_FAQS } from './shop-faq-data';
 
 export const metadata: Metadata = {
-  title: 'Shop Premium Sev & Namkeen | Aron Bites',
+  title: 'Buy Authentic Indori & Ratlami Sev Online | Aron Bites Shop',
   description:
-    'Explore our signature collection of authentic Indori Sev, Ratlami Sev, Nylon Sev, and royal namkeen from Aron Bites. Handcrafted in cold-pressed oil with pure stone-ground besan.',
+    'Shop authentic Indori Sev, Ratlami Laung Sev, Nylon Chaat Sev, and Malwa namkeen online. Handcrafted in pure cold-pressed oil with 100% stone-ground besan. Free delivery on orders ₹499+. Freshly packed & delivered across India.',
+  keywords: [
+    'buy Indori sev online',
+    'Ratlami sev buy online',
+    'authentic Indore namkeen store',
+    'nylon sev for chaat',
+    'pure besan sev online',
+    'Indore snacks online delivery',
+    'Aron Bites shop',
+    'Indian namkeen snacks order',
+  ],
   alternates: { canonical: absoluteUrl('/shop') },
+  openGraph: {
+    title: 'Buy Authentic Indori & Ratlami Sev Online | Aron Bites Shop',
+    description:
+      'Handcrafted in pure cold-pressed oil with 100% stone-ground besan. Free delivery on orders ₹499+. Freshly packed & delivered across India.',
+    url: absoluteUrl('/shop'),
+    type: 'website',
+  },
 };
 
 interface ShopPageProps {
@@ -50,8 +69,28 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   ]);
   const { products, total, totalPages, page } = catalog;
 
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': absoluteUrl('/shop#faq'),
+    mainEntity: SHOP_FAQS.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  };
+
   return (
     <PublicLayout>
+      {/* Schema.org FAQPage JSON-LD for AI Search & Google Featured Snippets */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema).replace(/</g, '\\u003c') }}
+      />
+
       {/* Header & Breadcrumb Hero Banner */}
       <section
         className="relative pt-8 pb-10 border-b border-border"
@@ -94,48 +133,55 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                 Shop Premium Sev
               </h1>
               <p className="text-sm sm:text-base text-gray-600 max-w-xl">
-                Explore the products currently available in our catalog.
+                Explore the authentic taste of Indore. 100% pure Chana Dal besan, cold-pressed oils, and zero preservatives.
               </p>
             </div>
 
-            {/* Results Pill */}
-            <div className="text-xs font-semibold text-gray-500 self-start md:self-end">
-              Showing <span className="font-bold text-ink">{products.length}</span> of{' '}
-              <span className="font-bold text-ink">{total}</span> authentic varieties
+            <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 bg-bg px-3.5 py-2 rounded-lg border border-border w-fit">
+              <span>Showing:</span>
+              <strong className="text-ink">
+                {products.length} of {total} {total === 1 ? 'variety' : 'varieties'}
+              </strong>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Main Catalog Viewport */}
-      <section className="py-5 sm:py-8 lg:py-10 bg-bg min-h-[60vh]">
+      {/* Main Catalog Section: Sidebar + Product Grid */}
+      <section className="py-8 sm:py-12 bg-bg min-h-[600px]">
         <div className="container-site">
-          <div className="grid grid-cols-1 lg:grid-cols-[16rem_minmax(0,1fr)] items-start gap-4 sm:gap-6 lg:gap-8">
-            {/* Mobile controls stack above results; the desktop sidebar occupies column one. */}
-            <Suspense fallback={null}>
-              <ShopFilters categories={categories} totalCount={total} />
-            </Suspense>
+          <div className="flex flex-col lg:flex-row gap-8 items-start">
+            {/* Left Filter Sidebar */}
+            <aside className="w-full lg:w-64 lg:shrink-0">
+              <Suspense
+                fallback={
+                  <div className="h-64 rounded-xl border border-border bg-white animate-pulse" />
+                }
+              >
+                <ShopFilters
+                  categories={categories}
+                  currentCategory={currentCategory}
+                  currentSort={currentSort}
+                  currentSpice={currentSpice}
+                  searchQuery={searchQuery}
+                />
+              </Suspense>
+            </aside>
 
-            {/* Product Grid Area */}
-            <main className="min-w-0 w-full" id="main-content">
+            {/* Right Product Grid */}
+            <main className="flex-1 w-full" aria-label="Product listings">
               {products.length === 0 ? (
-                /* Empty State */
-                <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-2xl bg-white border border-border shadow-sm">
-                  <div className="w-16 h-16 rounded-full bg-primary-faint flex items-center justify-center text-primary mb-4">
+                <div className="flex flex-col items-center justify-center p-12 text-center bg-white rounded-2xl border border-border">
+                  <div className="w-16 h-16 rounded-full bg-primary-faint text-primary flex items-center justify-center mb-4">
                     <PackageOpen size={32} />
                   </div>
-                  <h3
-                    className="text-lg font-bold text-ink mb-1"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                  >
-                    No Sev varieties match your selection
-                  </h3>
-                  <p className="text-xs sm:text-sm text-gray-500 max-w-sm mb-6">
-                    Try clearing or adjusting your category, spice level, or search filters to explore our full range.
+                  <h2 className="text-lg font-bold text-ink mb-1">No products found</h2>
+                  <p className="text-sm text-gray-500 max-w-sm mb-6">
+                    We couldn’t find any sev varieties matching your selected filters or search query.
                   </p>
                   <Link
                     href="/shop"
-                    className="inline-flex items-center justify-center px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-primary-dark transition-colors"
+                    className="btn btn-outline text-xs px-5 py-2.5 h-auto rounded-lg"
                   >
                     Reset All Filters
                   </Link>
@@ -184,6 +230,21 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           </div>
         </div>
       </section>
+
+      {/* 15 Consumer & Retail FAQs for SEO/GEO/AEO */}
+      <FaqAccordionSection
+        id="shop-faqs"
+        badge="Shopping & Product FAQs"
+        title="Frequently Asked Questions About Ordering Sev Online"
+        subtitle="Common questions about our authentic Indore recipes, shelf life, zero palm oil promise, doorstep transit protection, and pan-India shipping."
+        faqs={SHOP_FAQS}
+        searchPlaceholder="Search questions (e.g. palm oil, poha, free delivery, shelf life, tracking)..."
+        ctaTitle="Have a Question About Your Favorite Sev Variety?"
+        ctaDescription="Our customer care team is available on WhatsApp and phone to assist you with recommendations and order support."
+        ctaPrimaryLink={{ text: 'Contact Customer Support', href: '/contact' }}
+        ctaSecondaryLink={{ text: 'Bulk Orders (10 KG+)', href: '/bulk-orders' }}
+        className="bg-white border-t border-border"
+      />
     </PublicLayout>
   );
 }

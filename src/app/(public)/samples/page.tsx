@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import PublicLayout from '@/components/layout/PublicLayout';
 import toast from 'react-hot-toast';
+import { FaqAccordionSection } from '@/components/ui/FaqAccordionSection';
+import { SAMPLES_FAQS } from './samples-faq-data';
 
 const AVAILABLE_SAMPLE_VARIETIES = [
   { id: 'indori-50g', name: 'Classic Indori Sev', pack: '50g Pack' },
@@ -439,6 +441,21 @@ export default function SamplesPage() {
           </div>
         </div>
       </div>
+
+      {/* 15 Sample & Tasting Kit FAQs for SEO/GEO/AEO */}
+      <FaqAccordionSection
+        id="sample-kit-faqs"
+        badge="Sample Kit & Tasting FAQs"
+        title="Frequently Asked Questions About Sample Boxes"
+        subtitle="Everything you need to know about tasting packs, variety selections, ₹49 delivery fee credit, and transitioning to bulk orders."
+        faqs={SAMPLES_FAQS}
+        searchPlaceholder="Search sample questions (e.g. fee, varieties, dispatch, tracking, Jain)..."
+        ctaTitle="Ready to Taste Indore's Most Authentic Crunch?"
+        ctaDescription="Select your favorite 4 varieties above and get your trial box dispatched within 24 hours."
+        ctaPrimaryLink={{ text: 'Order Free Sample Box', href: '/samples' }}
+        ctaSecondaryLink={{ text: 'Browse Retail Shop', href: '/shop' }}
+        className="bg-bg border-t border-border"
+      />
     </PublicLayout>
   );
 }
