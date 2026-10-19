@@ -3,7 +3,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import PublicLayout from '@/components/layout/PublicLayout';
 import { absoluteUrl } from '@/lib/site-url';
-import { AboutFaqAccordion, ABOUT_FAQS } from './AboutFaqAccordion';
+import { AboutFaqAccordion } from './AboutFaqAccordion';
+import { ABOUT_FAQS } from './faq-data';
 import {
   Award,
   ShieldCheck,
