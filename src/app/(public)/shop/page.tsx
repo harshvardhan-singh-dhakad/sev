@@ -160,10 +160,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
               >
                 <ShopFilters
                   categories={categories}
-                  currentCategory={currentCategory}
-                  currentSort={currentSort}
-                  currentSpice={currentSpice}
-                  searchQuery={searchQuery}
+                  totalCount={total}
                 />
               </Suspense>
             </aside>
