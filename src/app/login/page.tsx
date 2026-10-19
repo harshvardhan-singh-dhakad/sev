@@ -350,17 +350,6 @@ function CustomerLoginForm() {
             </div>
           </div>
         </div>
-
-        {/* Link to Staff / Admin Login */}
-        <div className="mt-6 text-center text-xs text-stone-500">
-          <span>Are you an administrator or store staff? </span>
-          <Link
-            href="/admin/login"
-            className="font-semibold text-amber-800 hover:text-amber-950 underline underline-offset-4"
-          >
-            Access Admin Portal
-          </Link>
-        </div>
       </div>
     </div>
   );
