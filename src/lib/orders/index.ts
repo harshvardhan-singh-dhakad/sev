@@ -175,6 +175,70 @@ export async function createPendingOrder(input: CreatePendingOrderInput): Promis
       }
     }
 
+    // Option B: Dynamic Custom Box with individual snacks (min 4, max 15) + box packaging fee
+    if (!foundVariant && itemInput.variantId.startsWith('custom_box_') && Array.isArray(itemInput.customBoxItems) && itemInput.customBoxItems.length >= 4) {
+      let computedSnacksPaise = 0;
+      const snackDetails: string[] = [];
+
+      for (const it of itemInput.customBoxItems) {
+        const qty = it.qty || 1;
+        let vPrice = 9000; // default 250g pack paise (Rs 90)
+        let pName = it.productName || 'Malwa Snack';
+
+        let matched = false;
+        for (const prod of catalog.products) {
+          const v = prod.variants.find((variant) => 
+            (it.variantId && variant.id === it.variantId) || 
+            (it.productSlug && prod.slug === it.productSlug && variant.weight_grams === 250)
+          );
+          if (v) {
+            vPrice = v.price > 1000 ? v.price : v.price * 100;
+            pName = prod.name;
+            matched = true;
+            break;
+          }
+        }
+
+        if (!matched && it.variantId) {
+          const dbV = await orderDbQueryFirst<any>(
+            `SELECT pv.price, pv.price_paise, p.name as product_name
+             FROM product_variants pv
+             JOIN products p ON pv.product_id = p.id
+             WHERE pv.id = ?`,
+            [it.variantId]
+          );
+          if (dbV) {
+            vPrice = dbV.price_paise ?? dbV.price;
+            pName = dbV.product_name;
+          }
+        }
+
+        computedSnacksPaise += vPrice * qty;
+        snackDetails.push(`${qty > 1 ? `${qty}× ` : ''}${pName}`);
+      }
+
+      const totalItemsCount = itemInput.customBoxItems.reduce((acc, it) => acc + (it.qty || 1), 0);
+      const boxFeePaise = totalItemsCount <= 5 ? 5900 : totalItemsCount <= 8 ? 8900 : totalItemsCount <= 10 ? 11900 : 14900;
+      const finalBoxFee = computedSnacksPaise >= 99900 ? 0 : boxFeePaise;
+      const finalPrice = computedSnacksPaise + finalBoxFee;
+
+      const designTitle = itemInput.boxDesignName ? ` (${itemInput.boxDesignName})` : '';
+      foundProduct = {
+        slug: 'custom-festive-gift-box',
+        name: `Custom Gift Box${designTitle}`,
+      };
+      foundVariant = {
+        id: itemInput.variantId,
+        label: itemInput.packLabel || `${totalItemsCount} Packs: ${snackDetails.join(', ')}`,
+        weight_grams: totalItemsCount * 250,
+        price: finalPrice,
+        min_qty: 1,
+        max_qty: null,
+        step: 1,
+        is_active: true,
+      };
+    }
+
     // If not found in product_variants, check festive_gift_boxes
     if (!foundVariant) {
       const dbBox = await orderDbQueryFirst<any>(

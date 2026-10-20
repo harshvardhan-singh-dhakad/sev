@@ -127,6 +127,14 @@ export interface OrderItemInput {
   variantId: string;
   qty: number;
   packLabel?: string;
+  customBoxItems?: {
+    variantId?: string;
+    productSlug?: string;
+    productName?: string;
+    qty?: number;
+  }[];
+  boxDesignId?: string;
+  boxDesignName?: string;
 }
 
 export interface CreatePendingOrderInput {

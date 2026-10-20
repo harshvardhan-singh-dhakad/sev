@@ -212,6 +212,24 @@ export interface Address {
 }
 
 // ---- Cart Types ----
+export interface CartCustomBoxDetail {
+  designId: string;
+  designName: string;
+  designTheme?: string;
+  items: {
+    variantId: string;
+    productSlug: string;
+    productName: string;
+    qty: number;
+    price: number;
+  }[];
+  snacksSubtotal: number;
+  boxFee: number;
+  senderName?: string;
+  recipientName?: string;
+  giftMessage?: string;
+}
+
 export interface CartItem {
   productId: string;
   productName: string;
@@ -223,6 +241,7 @@ export interface CartItem {
   compareAtPrice?: number;
   thumbnail: string;
   slug: string;
+  customBoxDetails?: CartCustomBoxDetail;
 }
 
 export interface Cart {
