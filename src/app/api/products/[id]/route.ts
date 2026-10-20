@@ -21,7 +21,7 @@ export async function GET(_request: NextRequest, context: Context) {
     if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
 
     const variantResult = await d1Query<Record<string, unknown>>(
-      `SELECT id, label, weight_grams, price_paise, sku, stock_qty, is_active, status
+      `SELECT id, label, weight_grams, price_paise, sku, stock_qty, is_active, status, image
          FROM product_variants WHERE product_id = ? ORDER BY sort_order, weight_grams`, [id]
     );
     return NextResponse.json({
@@ -34,6 +34,8 @@ export async function GET(_request: NextRequest, context: Context) {
         shortDescription: product.short_description,
         description: product.long_description || product.description || '',
         status: product.status === 'published' ? 'active' : product.status,
+        images: product.images ? (typeof product.images === 'string' ? JSON.parse(product.images as string) : product.images) : [],
+        thumbnail: (product.thumbnail as string) || '',
         variants: variantResult.results.map((variant) => ({
           id: variant.id,
           label: variant.label,
@@ -41,6 +43,7 @@ export async function GET(_request: NextRequest, context: Context) {
           pricePaise: variant.price_paise,
           sku: variant.sku,
           stock: variant.stock_qty,
+          image: (variant.image as string) || '',
           isActive: Boolean(variant.is_active) && variant.status !== 'inactive',
         })),
       },
@@ -59,7 +62,7 @@ export async function PUT(request: NextRequest, context: Context) {
 
     const { id } = await context.params;
     const body = await request.json();
-    const { name, slug, categoryId, categorySlug, shortDescription, longDescription, description, status, variants } = body;
+    const { name, slug, categoryId, categorySlug, shortDescription, longDescription, description, status, variants, images, thumbnail } = body;
     if (typeof name !== 'string' || !name.trim() || typeof slug !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
       return NextResponse.json({ error: 'Product name and a valid URL slug are required' }, { status: 400 });
     }
@@ -105,14 +108,18 @@ export async function PUT(request: NextRequest, context: Context) {
 
     const now = new Date().toISOString();
     const nextStatus = status === 'active' ? 'published' : status;
+    const productImages = Array.isArray(images) ? images : [];
+    const resolvedThumbnail = thumbnail || (productImages[0]?.src ?? (typeof productImages[0] === 'string' ? productImages[0] : null));
+
     const statements = [{
       sql: `UPDATE products
                SET name = ?, slug = ?, category_slug = ?, short_description = ?,
-                   description = ?, long_description = ?, category_id = ?, status = ?, updated_at = ?
+                   description = ?, long_description = ?, category_id = ?, status = ?,
+                   images = ?, thumbnail = ?, updated_at = ?
              WHERE id = ?`,
       params: [name.trim(), slug.trim(), resolvedCategorySlug, shortDescription.trim(),
         (longDescription ?? description).trim(), (longDescription ?? description).trim(),
-        resolvedCategoryId, nextStatus, now, id],
+        resolvedCategoryId, nextStatus, JSON.stringify(productImages), resolvedThumbnail, now, id],
     }];
 
     const keptIds = new Set<string>();
@@ -123,26 +130,27 @@ export async function PUT(request: NextRequest, context: Context) {
       const stock = variant.stock === '' || variant.stock == null ? null : Number(variant.stock);
       const active = variant.isActive === false ? 0 : 1;
       const variantStatus = active ? 'active' : 'inactive';
+      const variantImage = variant.image ? String(variant.image).trim() : null;
       keptIds.add(variantId);
       if (currentIds.has(variantId)) {
         statements.push({
           sql: `UPDATE product_variants
                    SET label = ?, weight_grams = ?, price_paise = ?, sku = ?, stock_qty = ?,
                        is_active = ?, sort_order = ?, name = ?, weight = ?, price = ?, stock = ?,
-                       status = ?, updated_at = ?
+                       status = ?, image = ?, updated_at = ?
                  WHERE id = ? AND product_id = ?`,
           params: [variant.label.trim(), weight, price, variant.sku.trim(), stock, active, index,
-            variant.label.trim(), variant.label.trim(), price, stock, variantStatus, now, variantId, id],
+            variant.label.trim(), variant.label.trim(), price, stock, variantStatus, variantImage, now, variantId, id],
         });
       } else {
         statements.push({
           sql: `INSERT INTO product_variants (
                  id, product_id, label, weight_grams, price_paise, sku, stock_qty, min_qty,
                  max_qty, step, is_active, sort_order, created_at, updated_at,
-                 name, weight, price, stock, status
-               ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, NULL, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                 name, weight, price, stock, status, image
+               ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, NULL, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           params: [variantId, id, variant.label.trim(), weight, price, variant.sku.trim(), stock,
-            active, index, now, now, variant.label.trim(), variant.label.trim(), price, stock, variantStatus],
+            active, index, now, now, variant.label.trim(), variant.label.trim(), price, stock, variantStatus, variantImage],
         });
       }
     }

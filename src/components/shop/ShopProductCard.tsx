@@ -44,7 +44,7 @@ export function ShopProductCard({ product, className = '' }: ShopProductCardProp
       quantity: 1,
       price: pricePaise / 100, // store format compatibility (Rs)
       compareAtPrice: defaultVariant.mrp ? defaultVariant.mrp / 100 : undefined,
-      thumbnail: primaryImg?.src || '/images/placeholder-sev.svg',
+      thumbnail: defaultVariant.image || primaryImg?.src || '/images/placeholder-sev.svg',
       slug: product.slug,
     });
 

@@ -164,7 +164,7 @@ export function ProductBuyBox({
       quantity,
       price: currentPricePaise / 100, // store format compatibility
       compareAtPrice: selectedVariant.mrp ? selectedVariant.mrp / 100 : undefined,
-      thumbnail: primaryImage?.src || '/images/placeholder-sev.svg',
+      thumbnail: selectedVariant.image || primaryImage?.src || '/images/placeholder-sev.svg',
       slug: product.slug,
     });
 

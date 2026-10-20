@@ -191,13 +191,14 @@ export async function POST(request: NextRequest) {
       const weight = Number(variant.weightGrams);
       const price = Number(variant.pricePaise);
       const stock = variant.stock === '' || variant.stock == null ? null : Number(variant.stock);
+      const variantImage = variant.image ? String(variant.image).trim() : null;
       statements.push({
         sql: `INSERT INTO product_variants (
           id, product_id, label, weight_grams, price_paise, sku, stock_qty, min_qty, max_qty,
-          step, is_active, sort_order, created_at, updated_at, name, weight, price, stock, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, NULL, 1, 1, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+          step, is_active, sort_order, created_at, updated_at, name, weight, price, stock, status, image
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, NULL, 1, 1, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
         params: [variantId, id, variant.label, weight, price, variant.sku.trim(), stock, index, now, now,
-          variant.label, variant.label, price, stock],
+          variant.label, variant.label, price, stock, variantImage],
       });
     }
     await d1Batch(statements);

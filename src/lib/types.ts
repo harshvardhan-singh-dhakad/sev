@@ -101,6 +101,7 @@ export interface CatalogVariant {
   is_active: boolean;
   sort_order: number;
   badge: string | null;
+  image?: string | null;
 }
 
 export interface NutritionPer100g {

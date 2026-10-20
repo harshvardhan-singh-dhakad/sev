@@ -46,7 +46,30 @@ function mapProduct(row: Row, variants: Row[]): CatalogProduct {
       is_active: variant.status ? variant.status === 'active' : Boolean(Number(variant.is_active ?? 1)),
       sort_order: Number(variant.sort_order ?? 0),
       badge: null,
+      image: variant.image ? String(variant.image) : null,
     };
+  });
+
+  // Ensure each pack/variant image is registered in the images array with variant_ids
+  variants.forEach((v) => {
+    if (v.image && typeof v.image === 'string' && v.image.trim()) {
+      const vImg = v.image.trim();
+      const vId = String(v.id);
+      const existing = images.find((img) => img.src === vImg);
+      if (existing) {
+        if (!existing.variant_ids.includes(vId)) {
+          existing.variant_ids.push(vId);
+        }
+      } else {
+        images.push({
+          src: vImg,
+          alt: `${row.name} - ${v.label || v.weight || 'Pack'}`,
+          sort: images.length,
+          is_primary: false,
+          variant_ids: [vId],
+        });
+      }
+    }
   });
 
   const rawStatus = String(row.status ?? 'draft');
