@@ -15,9 +15,12 @@ export async function GET(request: NextRequest) {
     const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 100) : 50;
 
     const result = await d1Query(
-      `SELECT * FROM product_categories 
-       WHERE status = ? 
-       ORDER BY display_order ASC 
+      `SELECT pc.*, COUNT(p.id) AS live_product_count
+       FROM product_categories pc
+       LEFT JOIN products p ON (p.category_id = pc.id OR p.category_slug = pc.slug) AND p.status IN ('active', 'published')
+       WHERE pc.status = ? 
+       GROUP BY pc.id
+       ORDER BY pc.display_order ASC 
        LIMIT ?`,
       [status, limit]
     );
@@ -32,7 +35,7 @@ export async function GET(request: NextRequest) {
       status: row.status,
       seoTitle: row.seo_title,
       seoDescription: row.seo_description,
-      productCount: row.product_count,
+      productCount: Number(row.live_product_count ?? row.product_count ?? 0),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     }));
