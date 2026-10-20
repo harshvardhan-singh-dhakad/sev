@@ -190,7 +190,7 @@ export function CartDrawer() {
                       </div>
 
                       <div className="text-right">
-                        <p className="font-bold text-sm" style={{ color: '#FFF700' }}>
+                        <p className="font-bold text-sm" style={{ color: '#000000' }}>
                           {formatPrice(item.price * item.quantity)}
                         </p>
                         {item.compareAtPrice && item.compareAtPrice > item.price && (
@@ -224,7 +224,7 @@ export function CartDrawer() {
           >
             <div className="flex justify-between items-center mb-1">
               <span className="text-sm text-gray-600">Subtotal</span>
-              <span className="font-bold text-lg" style={{ color: '#FFF700' }}>
+              <span className="font-bold text-lg" style={{ color: '#000000' }}>
                 {formatPrice(subtotal)}
               </span>
             </div>
