@@ -82,6 +82,7 @@ export default function ProductForm({ productId }: { productId?: string }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(Boolean(productId));
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [loadError, setLoadError] = useState('');
 
   // Form Fields
@@ -375,6 +376,29 @@ export default function ProductForm({ productId }: { productId?: string }) {
     const slugPrefix = (slug || name || 'PRD').toUpperCase().slice(0, 4);
     const sku = `${slugPrefix}-${weightGrams}G`;
     setPacks((current) => [...current, emptyPack(label, weightGrams, sku)]);
+  }
+
+  // Delete product from form
+  async function handleDeleteProduct() {
+    if (!productId) return;
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${name}"?\n\nThis will remove the product from the storefront catalog.`
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/products/${encodeURIComponent(productId)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete product');
+      toast.success(data.message || 'Product deleted successfully!');
+      router.push('/admin/products');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Delete failed');
+      setDeleting(false);
+    }
   }
 
   // Form Submit
@@ -1107,12 +1131,24 @@ export default function ProductForm({ productId }: { productId?: string }) {
           </div>
         </section>
 
-        {/* Submit Button */}
+        {/* Submit & Delete Buttons */}
         {loadError ? null : (
-          <div className="flex justify-end border-t border-slate-100 pt-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-5">
+            {productId ? (
+              <button
+                type="button"
+                disabled={saving || deleting}
+                onClick={handleDeleteProduct}
+                className="btn btn-outline border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 h-[44px] px-5 text-sm font-bold inline-flex items-center gap-2"
+              >
+                <Trash2 size={16} />
+                {deleting ? 'Deleting product…' : 'Delete product'}
+              </button>
+            ) : <div />}
+
             <button
               type="submit"
-              disabled={saving || categories.length === 0}
+              disabled={saving || deleting || categories.length === 0}
               className="btn btn-primary h-[44px] px-8 text-sm font-bold shadow-md inline-flex items-center gap-2"
             >
               <Save size={16} />

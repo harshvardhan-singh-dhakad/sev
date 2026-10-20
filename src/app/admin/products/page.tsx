@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PackagePlus, RefreshCw } from 'lucide-react';
+import { PackagePlus, RefreshCw, Pencil, Trash2, Eye, EyeOff, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface AdminProduct {
   id: string;
@@ -19,6 +20,7 @@ export default function AdminProductsPage() {
   const [status, setStatus] = useState('active');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null);
 
   async function loadProducts() {
     setLoading(true);
@@ -37,6 +39,59 @@ export default function AdminProductsPage() {
 
   useEffect(() => { void loadProducts(); }, [status]);
 
+  // Toggle status between active (published) and draft (deactivated)
+  async function handleToggleStatus(productId: string, currentStatus: string) {
+    const isLive = currentStatus === 'active' || currentStatus === 'published';
+    const nextStatus = isLive ? 'draft' : 'active';
+    setActionInProgress(productId);
+    try {
+      const res = await fetch(`/api/products/${encodeURIComponent(productId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Status could not be updated.');
+
+      setProducts((prev) =>
+        prev.map((p) => (p.id === productId ? { ...p, status: nextStatus } : p))
+      );
+      toast.success(
+        nextStatus === 'active'
+          ? 'Product activated (Live on shop)!'
+          : 'Product deactivated (Hidden from shop)!'
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to change status');
+    } finally {
+      setActionInProgress(null);
+    }
+  }
+
+  // Delete product
+  async function handleDelete(productId: string, productName: string) {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${productName}"?\n\nThis will remove the product from the storefront catalog.`
+    );
+    if (!confirmed) return;
+
+    setActionInProgress(productId);
+    try {
+      const res = await fetch(`/api/products/${encodeURIComponent(productId)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete product');
+
+      setProducts((prev) => prev.filter((p) => p.id !== productId));
+      toast.success(data.message || `"${productName}" deleted successfully!`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Delete failed');
+    } finally {
+      setActionInProgress(null);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -54,7 +109,7 @@ export default function AdminProductsPage() {
           >
             <option value="active">Active (Live)</option>
             <option value="all">All Products</option>
-            <option value="draft">Drafts</option>
+            <option value="draft">Drafts (Deactivated)</option>
             <option value="archived">Archived</option>
           </select>
           <button
@@ -91,13 +146,14 @@ export default function AdminProductsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[650px] text-left text-sm">
+            <table className="w-full min-w-[750px] text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 border-b border-slate-200">
                 <tr>
                   <th className="px-5 py-3">Product</th>
                   <th className="px-5 py-3">Category</th>
                   <th className="px-5 py-3">Price</th>
                   <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -109,6 +165,7 @@ export default function AdminProductsPage() {
                   const max = prices.length ? Math.max(...prices) / 100 : null;
                   const isLive = product.status === 'active' || product.status === 'published';
                   const isDraft = product.status === 'draft';
+                  const isBusy = actionInProgress === product.id;
 
                   return (
                     <tr key={product.id} className="hover:bg-slate-50/60 transition-colors">
@@ -161,8 +218,59 @@ export default function AdminProductsPage() {
                               isLive ? 'bg-emerald-500' : isDraft ? 'bg-amber-500' : 'bg-slate-400'
                             }`}
                           />
-                          {isLive ? 'Active' : product.status}
+                          {isLive ? 'Active' : isDraft ? 'Draft (Inactive)' : product.status}
                         </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {/* Edit Button */}
+                          <Link
+                            href={`/admin/products/${encodeURIComponent(product.id)}/edit`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-amber-800 hover:border-amber-300 shadow-xs transition"
+                            title="Edit product"
+                          >
+                            <Pencil size={13} className="text-amber-600" />
+                            <span>Edit</span>
+                          </Link>
+
+                          {/* Toggle Active / Deactivate Button */}
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() => void handleToggleStatus(product.id, product.status)}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-xl border transition shadow-xs ${
+                              isLive
+                                ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100/80 hover:border-amber-300'
+                                : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100/80 hover:border-emerald-300'
+                            }`}
+                            title={isLive ? 'Deactivate (Hide from customer shop)' : 'Activate (Make Live on shop)'}
+                          >
+                            {isBusy ? (
+                              <Loader2 size={13} className="animate-spin" />
+                            ) : isLive ? (
+                              <>
+                                <EyeOff size={13} className="text-amber-700" />
+                                <span>Deactivate</span>
+                              </>
+                            ) : (
+                              <>
+                                <Eye size={13} className="text-emerald-700" />
+                                <span>Activate</span>
+                              </>
+                            )}
+                          </button>
+
+                          {/* Delete Button */}
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() => void handleDelete(product.id, product.name)}
+                            className="p-1.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 transition"
+                            title="Delete product"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -175,3 +283,4 @@ export default function AdminProductsPage() {
     </div>
   );
 }
+

@@ -170,3 +170,90 @@ export async function PUT(request: NextRequest, context: Context) {
     return NextResponse.json({ error: 'Product could not be updated. Check the slug and SKU are unique.' }, { status: 400 });
   }
 }
+
+export async function PATCH(request: NextRequest, context: Context) {
+  try {
+    const admin = await getAuthenticatedAdmin();
+    if (!admin) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+    if (!hasPermission(admin.role, 'catalog', 'edit')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { id } = await context.params;
+    const body = await request.json();
+    const { status } = body;
+
+    if (!['active', 'published', 'draft', 'archived'].includes(status)) {
+      return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
+    }
+
+    const dbStatus = status === 'active' ? 'published' : status;
+    const now = new Date().toISOString();
+
+    const existing = await d1Query<{ id: string }>('SELECT id FROM products WHERE id = ? LIMIT 1', [id]);
+    if (!existing.results[0]) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+
+    await d1Query(
+      'UPDATE products SET status = ?, updated_at = ? WHERE id = ?',
+      [dbStatus, now, id]
+    );
+
+    return NextResponse.json({ success: true, status });
+  } catch (error) {
+    console.error('PATCH /api/products/[id] error:', error);
+    return NextResponse.json({ error: 'Failed to update product status' }, { status: 500 });
+  }
+}
+
+export async function DELETE(_request: NextRequest, context: Context) {
+  try {
+    const admin = await getAuthenticatedAdmin();
+    if (!admin) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+    if (!hasPermission(admin.role, 'catalog', 'delete')) {
+      return NextResponse.json({ error: 'You do not have permission to delete products' }, { status: 403 });
+    }
+
+    const { id } = await context.params;
+    const existing = await d1Query<{ id: string; name: string }>('SELECT id, name FROM products WHERE id = ? LIMIT 1', [id]);
+    if (!existing.results[0]) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+
+    // Check if any order items reference this product
+    const orderCheck = await d1Query<{ count: number }>(
+      'SELECT COUNT(*) AS count FROM order_items WHERE product_id = ?',
+      [id]
+    );
+    const hasOrders = Number(orderCheck.results[0]?.count ?? 0) > 0;
+
+    const now = new Date().toISOString();
+    if (hasOrders) {
+      // Soft-delete / Archive to protect customer order history
+      await d1Batch([
+        { sql: "UPDATE products SET status = 'archived', deleted_at = ?, updated_at = ? WHERE id = ?", params: [now, now, id] },
+        { sql: "UPDATE product_variants SET is_active = 0, status = 'inactive', updated_at = ? WHERE product_id = ?", params: [now, id] },
+      ]);
+      return NextResponse.json({
+        success: true,
+        archived: true,
+        message: 'Product has order history, so it was safely archived and hidden from shop.',
+      });
+    } else {
+      // Full hard delete
+      await d1Batch([
+        { sql: 'DELETE FROM product_variants WHERE product_id = ?', params: [id] },
+        { sql: 'DELETE FROM products WHERE id = ?', params: [id] },
+      ]);
+      return NextResponse.json({
+        success: true,
+        deleted: true,
+        message: 'Product deleted permanently.',
+      });
+    }
+  } catch (error) {
+    console.error('DELETE /api/products/[id] error:', error);
+    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
+  }
+}
