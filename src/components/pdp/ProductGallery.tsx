@@ -144,6 +144,7 @@ export function ProductGallery({
                   src={img.src}
                   alt={img.alt || `${productName} thumbnail ${idx + 1}`}
                   fill
+                  unoptimized={true}
                   sizes="80px"
                   className="object-cover"
                 />
@@ -170,6 +171,7 @@ export function ProductGallery({
             src={activeImage.src}
             alt={activeImage.alt || productName}
             fill
+            unoptimized={true}
             priority={true}
             sizes="(max-width: 1024px) 100vw, 550px"
             className="object-cover transition-opacity duration-150"
@@ -291,6 +293,7 @@ export function ProductGallery({
               src={activeImage.src}
               alt={activeImage.alt || productName}
               fill
+              unoptimized={true}
               className="object-contain"
               priority={true}
             />

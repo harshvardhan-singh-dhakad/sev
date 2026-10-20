@@ -309,17 +309,6 @@ export default function ProductForm({ productId }: { productId?: string }) {
       const uploadedUrl = data.media.url;
       updatePack(packIndex, side === 'front' ? 'image' : 'backImage', uploadedUrl);
 
-      // Also add to product gallery if not already present
-      setImages((prev) => {
-        if (!prev.some((img) => img.src === uploadedUrl)) {
-          return [
-            ...prev,
-            { src: uploadedUrl, alt: `${name.trim()} - ${packLabel} (${sideLabel})`, isPrimary: false },
-          ];
-        }
-        return prev;
-      });
-
       toast.success(`${packLabel} (${sideLabel}) photo uploaded successfully!`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Pack photo upload failed');

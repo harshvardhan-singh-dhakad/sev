@@ -76,6 +76,7 @@ export function ShopProductCard({ product, className = '' }: ShopProductCardProp
             src={activeImgSrc}
             alt={primaryImg?.alt || product.name}
             fill
+            unoptimized={true}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             priority={false}

@@ -10,7 +10,8 @@ function parseJson(value: unknown): unknown {
 
 function mapImages(value: unknown, fallback?: unknown): CatalogProduct['images'] {
   const images = parseJson(value);
-  const parsed = Array.isArray(images) && images.length > 0 ? images : parseJson(fallback);
+  const fallbackStr = typeof fallback === 'string' && fallback.trim() ? fallback.trim() : null;
+  const parsed = Array.isArray(images) && images.length > 0 ? images : (fallbackStr || parseJson(fallback));
   if (typeof parsed === 'string' && parsed) return [{ src: parsed, alt: '', sort: 0, is_primary: true, variant_ids: [] }];
   if (!Array.isArray(parsed)) return [];
   return parsed.flatMap((item, index) => {
@@ -92,7 +93,7 @@ function mapProduct(row: Row, variants: Row[]): CatalogProduct {
           src: imgItem.url,
           alt: `${row.name} - ${v.label || v.weight || 'Pack'} (${imgItem.label})`,
           sort: images.length,
-          is_primary: false,
+          is_primary: images.length === 0,
           variant_ids: [vId],
         });
       }
