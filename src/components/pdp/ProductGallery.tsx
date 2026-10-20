@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { ZoomIn, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Image as ProductImage } from '@/lib/catalog';
 
@@ -24,31 +24,37 @@ export function ProductGallery({
   const galleryRef = useRef<HTMLDivElement>(null);
   const lightboxRef = useRef<HTMLDivElement>(null);
 
-  // Fallback to placeholder if images array is empty
-  const displayImages = images.length > 0 ? images : [
-    { src: '/images/placeholder-sev.svg', alt: productName, sort: 1, is_primary: true, variant_ids: [] },
-  ];
+  // Filter and prioritize images for the currently selected variant:
+  // 1. Pack photos explicitly belonging to this variant (Front & Back)
+  // 2. General product photos (not belonging to a DIFFERENT variant)
+  const displayImages = useMemo(() => {
+    if (!images || images.length === 0) {
+      return [
+        { src: '/images/placeholder-sev.svg', alt: productName, sort: 1, is_primary: true, variant_ids: [] },
+      ];
+    }
 
-  // Re-sync active image when variant selection changes
-  useEffect(() => {
-    if (!selectedVariantId) return;
+    if (!selectedVariantId) return images;
 
-    // Find first image matching this variant
-    const matchIdx = displayImages.findIndex((img) =>
-      img.variant_ids && img.variant_ids.includes(selectedVariantId)
+    // Pack-specific photos for this variant (Front, Back)
+    const variantSpecific = images.filter(
+      (img) => img.variant_ids && img.variant_ids.includes(selectedVariantId)
     );
 
-    if (matchIdx !== -1) {
-      setActiveIndex(matchIdx);
-      onActiveIndexChange?.(matchIdx);
-    } else {
-      // Fallback to primary image
-      const primaryIdx = displayImages.findIndex((img) => img.is_primary);
-      const targetIdx = primaryIdx !== -1 ? primaryIdx : 0;
-      setActiveIndex(targetIdx);
-      onActiveIndexChange?.(targetIdx);
-    }
-  }, [selectedVariantId, displayImages, onActiveIndexChange]);
+    // General product photos (not tied to another specific variant)
+    const generalImages = images.filter(
+      (img) => !img.variant_ids || img.variant_ids.length === 0
+    );
+
+    const merged = [...variantSpecific, ...generalImages];
+    return merged.length > 0 ? merged : images;
+  }, [images, selectedVariantId, productName]);
+
+  // When variant changes, reset activeIndex to 0 (the Front pack image)
+  useEffect(() => {
+    setActiveIndex(0);
+    onActiveIndexChange?.(0);
+  }, [selectedVariantId, onActiveIndexChange]);
 
   const activeImage = displayImages[activeIndex] || displayImages[0];
 

@@ -46,30 +46,57 @@ function mapProduct(row: Row, variants: Row[]): CatalogProduct {
       is_active: variant.status ? variant.status === 'active' : Boolean(Number(variant.is_active ?? 1)),
       sort_order: Number(variant.sort_order ?? 0),
       badge: null,
-      image: variant.image ? String(variant.image) : null,
+      image: (typeof variant.image === 'string' && (variant.image.trim().startsWith('{') || variant.image.trim().startsWith('[')))
+        ? (() => {
+            try {
+              const p = JSON.parse(variant.image.trim());
+              return Array.isArray(p) ? p[0] : (p.front || p[Object.keys(p)[0]] || null);
+            } catch { return String(variant.image); }
+          })()
+        : (variant.image ? String(variant.image) : null),
     };
   });
 
-  // Ensure each pack/variant image is registered in the images array with variant_ids
+  // Ensure each pack/variant image (Front & Back) is registered in the images array with variant_ids
   variants.forEach((v) => {
+    const vId = String(v.id);
+    let vImages: Array<{ url: string; label: string }> = [];
+
     if (v.image && typeof v.image === 'string' && v.image.trim()) {
-      const vImg = v.image.trim();
-      const vId = String(v.id);
-      const existing = images.find((img) => img.src === vImg);
+      const raw = v.image.trim();
+      if (raw.startsWith('{') || raw.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            vImages = parsed.filter(Boolean).map((u, i) => ({ url: String(u), label: i === 0 ? 'Front' : 'Back' }));
+          } else if (typeof parsed === 'object' && parsed !== null) {
+            if (parsed.front) vImages.push({ url: String(parsed.front), label: 'Front' });
+            if (parsed.back) vImages.push({ url: String(parsed.back), label: 'Back' });
+          }
+        } catch {
+          vImages = [{ url: raw, label: 'Front' }];
+        }
+      } else {
+        vImages = [{ url: raw, label: 'Front' }];
+      }
+    }
+
+    vImages.forEach((imgItem) => {
+      const existing = images.find((img) => img.src === imgItem.url);
       if (existing) {
         if (!existing.variant_ids.includes(vId)) {
           existing.variant_ids.push(vId);
         }
       } else {
         images.push({
-          src: vImg,
-          alt: `${row.name} - ${v.label || v.weight || 'Pack'}`,
+          src: imgItem.url,
+          alt: `${row.name} - ${v.label || v.weight || 'Pack'} (${imgItem.label})`,
           sort: images.length,
           is_primary: false,
           variant_ids: [vId],
         });
       }
-    }
+    });
   });
 
   const rawStatus = String(row.status ?? 'draft');

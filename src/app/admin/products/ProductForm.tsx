@@ -40,6 +40,7 @@ interface Pack {
   stock: string;
   isActive: boolean;
   image?: string;
+  backImage?: string;
 }
 
 interface ProductData {
@@ -73,6 +74,7 @@ const emptyPack = (label = '', weightGrams = '', defaultSku = ''): Pack => ({
   stock: '',
   isActive: true,
   image: '',
+  backImage: '',
 });
 
 export default function ProductForm({ productId }: { productId?: string }) {
@@ -97,7 +99,7 @@ export default function ProductForm({ productId }: { productId?: string }) {
 
   // Packs / Variants State
   const [packs, setPacks] = useState<Pack[]>([emptyPack('250 g', '250', '')]);
-  const [uploadingPackIndex, setUploadingPackIndex] = useState<number | null>(null);
+  const [uploadingPackSide, setUploadingPackSide] = useState<{ index: number; side: 'front' | 'back' } | null>(null);
 
   // Quick Category Creation State
   const [showQuickCategory, setShowQuickCategory] = useState(false);
@@ -164,19 +166,43 @@ export default function ProductForm({ productId }: { productId?: string }) {
             setImages([{ src: product.thumbnail, alt: product.name, isPrimary: true }]);
           }
 
-          // Map variants with their specific image
+          // Map variants with their specific image (Front & Back)
           if (Array.isArray(product.variants) && product.variants.length > 0) {
             setPacks(
-              product.variants.map((variant) => ({
-                id: variant.id,
-                label: variant.label,
-                weightGrams: String(variant.weightGrams),
-                price: (variant.pricePaise / 100).toFixed(2),
-                sku: variant.sku,
-                stock: variant.stock == null ? '' : String(variant.stock),
-                image: variant.image || '',
-                isActive: variant.isActive,
-              }))
+              product.variants.map((variant) => {
+                let front = '';
+                let back = '';
+                if (variant.image) {
+                  const raw = variant.image.trim();
+                  if (raw.startsWith('{') || raw.startsWith('[')) {
+                    try {
+                      const parsed = JSON.parse(raw);
+                      if (Array.isArray(parsed)) {
+                        front = parsed[0] || '';
+                        back = parsed[1] || '';
+                      } else if (typeof parsed === 'object' && parsed !== null) {
+                        front = parsed.front || '';
+                        back = parsed.back || '';
+                      }
+                    } catch {
+                      front = raw;
+                    }
+                  } else {
+                    front = raw;
+                  }
+                }
+                return {
+                  id: variant.id,
+                  label: variant.label,
+                  weightGrams: String(variant.weightGrams),
+                  price: (variant.pricePaise / 100).toFixed(2),
+                  sku: variant.sku,
+                  stock: variant.stock == null ? '' : String(variant.stock),
+                  image: front,
+                  backImage: back,
+                  isActive: variant.isActive,
+                };
+              })
             );
           }
         }
@@ -263,41 +289,42 @@ export default function ProductForm({ productId }: { productId?: string }) {
     });
   }
 
-  // Upload Pack-Specific Image (e.g. 100g pouch photo, 250g box photo)
-  async function handleUploadPackImage(packIndex: number, file: File) {
+  // Upload Pack-Specific Image (Front or Back side)
+  async function handleUploadPackImage(packIndex: number, file: File, side: 'front' | 'back' = 'front') {
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Pack photo must be 5 MB or smaller');
       return;
     }
-    setUploadingPackIndex(packIndex);
+    setUploadingPackSide({ index: packIndex, side });
     try {
       const packLabel = packs[packIndex]?.label || `${packs[packIndex]?.weightGrams}g`;
+      const sideLabel = side === 'front' ? 'Front Side' : 'Back Side (Nutrition)';
       const fd = new FormData();
       fd.append('file', file);
-      fd.append('altText', `${name.trim()} - ${packLabel} pack`);
+      fd.append('altText', `${name.trim()} - ${packLabel} (${sideLabel})`);
       const res = await fetch('/api/admin/media', { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to upload pack image');
       const uploadedUrl = data.media.url;
-      updatePack(packIndex, 'image', uploadedUrl);
+      updatePack(packIndex, side === 'front' ? 'image' : 'backImage', uploadedUrl);
 
       // Also add to product gallery if not already present
       setImages((prev) => {
         if (!prev.some((img) => img.src === uploadedUrl)) {
           return [
             ...prev,
-            { src: uploadedUrl, alt: `${name.trim()} - ${packLabel}`, isPrimary: false },
+            { src: uploadedUrl, alt: `${name.trim()} - ${packLabel} (${sideLabel})`, isPrimary: false },
           ];
         }
         return prev;
       });
 
-      toast.success(`${packLabel} pack photo uploaded successfully!`);
+      toast.success(`${packLabel} (${sideLabel}) photo uploaded successfully!`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Pack photo upload failed');
     } finally {
-      setUploadingPackIndex(null);
+      setUploadingPackSide(null);
     }
   }
 
@@ -392,16 +419,28 @@ export default function ProductForm({ productId }: { productId?: string }) {
             storage: 'Store in a cool, dry place away from direct sunlight',
             images: formattedImages,
             thumbnail: primaryImg,
-            variants: packs.map((pack) => ({
-              id: pack.id,
-              label: pack.label,
-              weightGrams: Number(pack.weightGrams),
-              pricePaise: Math.round(Number(pack.price) * 100),
-              sku: pack.sku,
-              stock: pack.stock === '' ? null : Number(pack.stock),
-              image: pack.image?.trim() || null,
-              isActive: pack.isActive,
-            })),
+            variants: packs.map((pack) => {
+              let imageVal: string | null = null;
+              const f = pack.image?.trim();
+              const b = pack.backImage?.trim();
+              if (f && b) {
+                imageVal = JSON.stringify({ front: f, back: b });
+              } else if (f) {
+                imageVal = f;
+              } else if (b) {
+                imageVal = b;
+              }
+              return {
+                id: pack.id,
+                label: pack.label,
+                weightGrams: Number(pack.weightGrams),
+                pricePaise: Math.round(Number(pack.price) * 100),
+                sku: pack.sku,
+                stock: pack.stock === '' ? null : Number(pack.stock),
+                image: imageVal,
+                isActive: pack.isActive,
+              };
+            }),
           }),
         }
       );
@@ -906,82 +945,163 @@ export default function ProductForm({ productId }: { productId?: string }) {
                   </label>
                 </div>
 
-                {/* Pack-Specific Image Box */}
-                <div className="mt-4 pt-3 border-t border-slate-200/60 bg-white p-3 rounded-xl border">
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                {/* Pack-Specific Images (Front & Back Dual Sides) */}
+                <div className="mt-4 pt-3 border-t border-slate-200/60 bg-slate-50/50 p-3.5 rounded-xl border border-slate-200/80">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                     <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                      <ImageIcon size={14} className="text-amber-600" />
-                      Specific Photo for {pack.label || 'this pack size'}:
+                      <ImageIcon size={15} className="text-amber-600" />
+                      Packaging Photos for {pack.label || 'this pack'}:
                     </span>
                     <span className="text-[11px] text-slate-500">
-                      Customer jab is pack ko select karega to ye photo show hogi
+                      Customer is pack ko select karega to Front &amp; Back packaging photos show hongi
                     </span>
                   </div>
 
-                  {pack.image ? (
-                    <div className="flex items-center gap-3 bg-amber-50/50 p-2 rounded-xl border border-amber-200/70">
-                      <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-white border border-slate-200 shrink-0">
-                        <img
-                          src={pack.image}
-                          alt={pack.label}
-                          className="w-full h-full object-cover"
-                        />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {/* Front Side Photo */}
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                          <span>🖼️</span> Front Side (Pouch Cover)
+                        </span>
+                        <span className="text-[10px] text-slate-400">Main Display</span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-emerald-700 flex items-center gap-1">
-                          <CheckCircle2 size={13} /> Pack photo active
-                        </p>
-                        <p className="text-[11px] text-slate-500 truncate font-mono mt-0.5">
-                          {pack.image}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => updatePack(index, 'image', '')}
-                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                        title="Remove pack photo"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col sm:flex-row items-center gap-2">
-                      <label className="flex-1 cursor-pointer flex items-center justify-center gap-2 px-3 py-2 border border-dashed border-amber-300 hover:border-amber-500 rounded-xl bg-amber-50/30 hover:bg-amber-50 text-xs font-bold text-amber-900 transition-colors w-full">
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp"
-                          className="hidden"
-                          disabled={uploadingPackIndex === index}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) void handleUploadPackImage(index, file);
-                            e.target.value = '';
-                          }}
-                        />
-                        {uploadingPackIndex === index ? (
-                          <>
-                            <Loader2 size={14} className="animate-spin text-amber-600" />
-                            <span>Uploading {pack.label} photo to R2...</span>
-                          </>
-                        ) : (
-                          <>
-                            <UploadCloud size={15} className="text-amber-700" />
-                            <span>
-                              Upload {pack.label || 'Pack'} Photo (Pouch/Packaging Image)
-                            </span>
-                          </>
-                        )}
-                      </label>
 
-                      <input
-                        type="text"
-                        value={pack.image || ''}
-                        onChange={(e) => updatePack(index, 'image', e.target.value)}
-                        placeholder="Or paste pack image link"
-                        className="form-input text-xs py-1.5 px-3 font-mono text-slate-600 sm:w-60 w-full"
-                      />
+                      {pack.image ? (
+                        <div className="flex items-center gap-2.5 bg-amber-50/60 p-2 rounded-lg border border-amber-200/80">
+                          <div className="relative w-12 h-12 rounded-md overflow-hidden bg-white border border-slate-200 shrink-0">
+                            <img
+                              src={pack.image}
+                              alt={`${pack.label} Front`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
+                              <CheckCircle2 size={12} /> Front photo active
+                            </p>
+                            <p className="text-[10px] text-slate-500 truncate font-mono mt-0.5">
+                              {pack.image}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => updatePack(index, 'image', '')}
+                            className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition"
+                            title="Remove front photo"
+                          >
+                            <X size={15} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <label className="cursor-pointer flex items-center justify-center gap-2 px-3 py-2 border border-dashed border-amber-300 hover:border-amber-500 rounded-lg bg-amber-50/40 hover:bg-amber-50 text-xs font-semibold text-amber-900 transition-colors w-full">
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              className="hidden"
+                              disabled={uploadingPackSide?.index === index && uploadingPackSide?.side === 'front'}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) void handleUploadPackImage(index, file, 'front');
+                                e.target.value = '';
+                              }}
+                            />
+                            {uploadingPackSide?.index === index && uploadingPackSide?.side === 'front' ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin text-amber-600" />
+                                <span className="text-[11px]">Uploading Front...</span>
+                              </>
+                            ) : (
+                              <>
+                                <UploadCloud size={14} className="text-amber-700" />
+                                <span className="text-[11px]">Upload Front Cover Photo</span>
+                              </>
+                            )}
+                          </label>
+                          <input
+                            type="text"
+                            value={pack.image || ''}
+                            onChange={(e) => updatePack(index, 'image', e.target.value)}
+                            placeholder="Or paste front image URL"
+                            className="form-input text-[11px] py-1 px-2.5 font-mono text-slate-600 w-full"
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
+
+                    {/* Back Side Photo */}
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                          <span>🔄</span> Back Side (Nutrition &amp; Ingredients)
+                        </span>
+                        <span className="text-[10px] text-slate-400">Nutritional Info</span>
+                      </div>
+
+                      {pack.backImage ? (
+                        <div className="flex items-center gap-2.5 bg-blue-50/60 p-2 rounded-lg border border-blue-200/80">
+                          <div className="relative w-12 h-12 rounded-md overflow-hidden bg-white border border-slate-200 shrink-0">
+                            <img
+                              src={pack.backImage}
+                              alt={`${pack.label} Back`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
+                              <CheckCircle2 size={12} /> Back photo active
+                            </p>
+                            <p className="text-[10px] text-slate-500 truncate font-mono mt-0.5">
+                              {pack.backImage}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => updatePack(index, 'backImage', '')}
+                            className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition"
+                            title="Remove back photo"
+                          >
+                            <X size={15} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <label className="cursor-pointer flex items-center justify-center gap-2 px-3 py-2 border border-dashed border-blue-300 hover:border-blue-500 rounded-lg bg-blue-50/40 hover:bg-blue-50 text-xs font-semibold text-blue-900 transition-colors w-full">
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              className="hidden"
+                              disabled={uploadingPackSide?.index === index && uploadingPackSide?.side === 'back'}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) void handleUploadPackImage(index, file, 'back');
+                                e.target.value = '';
+                              }}
+                            />
+                            {uploadingPackSide?.index === index && uploadingPackSide?.side === 'back' ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin text-blue-600" />
+                                <span className="text-[11px]">Uploading Back...</span>
+                              </>
+                            ) : (
+                              <>
+                                <UploadCloud size={14} className="text-blue-700" />
+                                <span className="text-[11px]">Upload Back Side (Nutrition)</span>
+                              </>
+                            )}
+                          </label>
+                          <input
+                            type="text"
+                            value={pack.backImage || ''}
+                            onChange={(e) => updatePack(index, 'backImage', e.target.value)}
+                            placeholder="Or paste back image URL"
+                            className="form-input text-[11px] py-1 px-2.5 font-mono text-slate-600 w-full"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
