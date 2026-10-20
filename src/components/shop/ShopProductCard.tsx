@@ -19,8 +19,16 @@ export function ShopProductCard({ product, className = '' }: ShopProductCardProp
   const { addItem } = useCartStore();
 
   const defaultVariant: Variant = getDefaultVariant(product);
-  const primaryImg = product.images.find((img) => img.is_primary) || product.images[0];
-  const secondaryImg = product.images.length > 1 ? product.images[1] : null;
+  const defaultVariantImgs = product.images.filter(
+    (img) => img.variant_ids && img.variant_ids.includes(defaultVariant.id)
+  );
+  const primaryImg =
+    defaultVariantImgs[0] ||
+    product.images.find((img) => img.is_primary) ||
+    product.images[0];
+  const secondaryImg =
+    defaultVariantImgs[1] ||
+    (product.images.length > 1 ? product.images[1] : null);
 
   const activeImgSrc = isHovered && secondaryImg ? secondaryImg.src : primaryImg?.src || '/images/placeholder-sev.svg';
   const pricePaise = defaultVariant.price;

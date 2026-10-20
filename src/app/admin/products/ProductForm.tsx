@@ -396,7 +396,7 @@ export default function ProductForm({ productId }: { productId?: string }) {
     }));
 
     const primaryImg =
-      images.find((img) => img.isPrimary)?.src || images[0]?.src || packs[0]?.image || '';
+      packs[0]?.image || images.find((img) => img.isPrimary)?.src || images[0]?.src || '';
 
     setSaving(true);
     try {
@@ -649,14 +649,14 @@ export default function ProductForm({ productId }: { productId?: string }) {
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
             <div>
               <h2 className="text-sm font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <ImageIcon size={16} className="text-amber-600" /> 2. Product Photos & Gallery
+                <ImageIcon size={16} className="text-amber-600" /> 2. Extra Photos & Product Gallery (Katora, Serving Bowl, Close-up, etc.)
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Main storefront hero images and photo gallery. Star (⭐) the primary cover image.
+                Pack ke pouch ke alawa koi bhi extra photos yahan upload karein (jaise katore/bowl me sev, close-up texture, thali/serving). Yeh product page par e-commerce gallery me pack photos ke baad dikhengi.
               </p>
             </div>
             <span className="text-xs font-bold text-slate-500">
-              {images.length} photo{images.length === 1 ? '' : 's'} added
+              {images.length} extra photo{images.length === 1 ? '' : 's'} added
             </span>
           </div>
 
@@ -691,7 +691,7 @@ export default function ProductForm({ productId }: { productId?: string }) {
                   <>
                     <UploadCloud size={20} className="text-amber-600 shrink-0" />
                     <div className="text-left">
-                      <p className="text-xs font-bold">Upload Product Photos (Multi-select supported)</p>
+                      <p className="text-xs font-bold">Upload Extra Photos (Katora, Serving Bowl, Close-up, etc.)</p>
                       <p className="text-[11px] text-slate-500">
                         Click to select 1 or multiple JPG, PNG or WEBP photos (up to 5 MB each)
                       </p>
