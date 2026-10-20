@@ -90,7 +90,7 @@ export default function ProductForm({ productId }: { productId?: string }) {
   const [slug, setSlug] = useState('');
   const [shortDescription, setShortDescription] = useState('');
   const [description, setDescription] = useState('');
-  const [status, setStatus] = useState('draft');
+  const [status, setStatus] = useState('active');
 
   // Product Images State
   const [images, setImages] = useState<ProductImageItem[]>([]);
@@ -612,8 +612,8 @@ export default function ProductForm({ productId }: { productId?: string }) {
                 onChange={(event) => setStatus(event.target.value)}
                 className="form-select mt-1.5 w-full text-sm font-medium bg-white"
               >
-                <option value="draft">Draft (Hidden from storefront)</option>
                 <option value="active">Publish to shop (Live)</option>
+                <option value="draft">Draft (Hidden from storefront)</option>
                 <option value="archived">Archived</option>
               </select>
             </label>

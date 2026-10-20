@@ -28,6 +28,8 @@ export async function GET(request: NextRequest) {
 
     if (status === 'active') {
       conditions.push("p.status IN ('active', 'published')");
+    } else if (status === 'all') {
+      // Return all products regardless of status
     } else if (status) {
       conditions.push('p.status = ?');
       params.push(status);
