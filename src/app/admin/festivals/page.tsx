@@ -100,7 +100,32 @@ export default function AdminFestivalsPage() {
       const res = await fetch('/api/admin/media', { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to upload banner');
-      setFormBannerUrl(data.media.url);
+      const uploadedUrl = data.media.url;
+      setFormBannerUrl(uploadedUrl);
+
+      // Auto-save immediately to database if an existing festival is open
+      if (selectedFestival) {
+        try {
+          const patchRes = await fetch('/api/admin/festivals', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: selectedFestival.id,
+              bannerUrl: uploadedUrl,
+            }),
+          });
+          if (patchRes.ok) {
+            setSelectedFestival((prev) => (prev ? { ...prev, bannerUrl: uploadedUrl } : null));
+            setFestivals((prev) =>
+              prev.map((f) => (f.id === selectedFestival.id ? { ...f, bannerUrl: uploadedUrl } : f))
+            );
+            toast.success('Festival poster uploaded and saved automatically!');
+            return;
+          }
+        } catch {
+          // If auto-save fails, user can still click Save Changes
+        }
+      }
       toast.success('Festival poster uploaded successfully!');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Banner upload failed');
@@ -123,7 +148,32 @@ export default function AdminFestivalsPage() {
       const res = await fetch('/api/admin/media', { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to upload box image');
-      setBoxImageUrl(data.media.url);
+      const uploadedUrl = data.media.url;
+      setBoxImageUrl(uploadedUrl);
+
+      // Auto-save immediately if an existing gift box is open
+      if (selectedBox) {
+        try {
+          const patchRes = await fetch('/api/admin/festivals/gift-boxes', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: selectedBox.id,
+              imageUrl: uploadedUrl,
+            }),
+          });
+          if (patchRes.ok) {
+            setSelectedBox((prev) => (prev ? { ...prev, imageUrl: uploadedUrl } : null));
+            setGiftBoxes((prev) =>
+              prev.map((b) => (b.id === selectedBox.id ? { ...b, imageUrl: uploadedUrl } : b))
+            );
+            toast.success('Gift box photo uploaded and saved automatically!');
+            return;
+          }
+        } catch {
+          // Fall back to setting state
+        }
+      }
       toast.success('Gift box photo uploaded successfully!');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Box photo upload failed');
@@ -587,6 +637,18 @@ export default function AdminFestivalsPage() {
                       className="h-3 w-full"
                       style={{ backgroundColor: fest.themeColor || '#d97706' }}
                     />
+                    {fest.bannerUrl ? (
+                      <div className="relative h-28 w-full overflow-hidden bg-slate-900/10 border-b border-slate-100">
+                        <img
+                          src={fest.bannerUrl}
+                          alt={fest.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-black/60 text-white text-[10px] font-bold backdrop-blur-xs flex items-center gap-1">
+                          <CheckCircle2 size={11} className="text-emerald-400" /> Poster Active
+                        </div>
+                      </div>
+                    ) : null}
                     <div className="p-5 sm:p-6 space-y-3">
                       <div className="flex items-start justify-between gap-3">
                         <div>
@@ -1032,12 +1094,13 @@ export default function AdminFestivalsPage() {
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) void handleUploadBannerFile(file);
+                          e.target.value = '';
                         }}
                       />
                       {uploadingBanner ? (
                         <>
                           <Loader2 size={16} className="animate-spin text-amber-600" />
-                          <span>Uploading Poster to R2 Storage...</span>
+                          <span>Uploading Poster & Saving to R2...</span>
                         </>
                       ) : (
                         <>
@@ -1051,7 +1114,7 @@ export default function AdminFestivalsPage() {
                   {/* Manual / Automatic Link input */}
                   <div>
                     <input
-                      type="url"
+                      type="text"
                       value={formBannerUrl}
                       onChange={(e) => setFormBannerUrl(e.target.value)}
                       placeholder="Automatic CDN URL (or paste external image link here)"
@@ -1303,6 +1366,7 @@ export default function AdminFestivalsPage() {
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) void handleUploadBoxImageFile(file);
+                          e.target.value = '';
                         }}
                       />
                       {uploadingBoxImage ? (

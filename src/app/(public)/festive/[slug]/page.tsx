@@ -41,6 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: `${festival.name} - Aron Bites Gifting`,
       description: festival.tagline,
+      images: festival.bannerUrl ? [festival.bannerUrl] : undefined,
     },
   };
 }
@@ -69,6 +70,14 @@ export default async function FestivalLandingPage({ params }: Props) {
           background: `linear-gradient(135deg, ${themeColor} 0%, #1e1b4b 100%)`,
         }}
       >
+        {/* Festive Poster Banner if available */}
+        {festival.bannerUrl && (
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-25 mix-blend-overlay pointer-events-none"
+            style={{ backgroundImage: `url(${festival.bannerUrl})` }}
+          />
+        )}
+
         {/* Decorative sparkles & lighting overlay */}
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
 
