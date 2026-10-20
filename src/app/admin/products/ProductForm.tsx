@@ -227,27 +227,36 @@ export default function ProductForm({ productId }: { productId?: string }) {
     );
   };
 
-  // Upload Main Product Image
-  async function handleUploadMainImage(file: File) {
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image file must be 5 MB or smaller');
+  // Upload Main Product Image(s)
+  async function handleUploadMainImages(fileList: FileList | File[]) {
+    const files = Array.from(fileList);
+    if (!files.length) return;
+    const oversized = files.filter((f) => f.size > 5 * 1024 * 1024);
+    if (oversized.length > 0) {
+      toast.error('Each photo must be 5 MB or smaller');
       return;
     }
     setUploadingMainImage(true);
+    let successCount = 0;
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('altText', name.trim() || 'Product Photo');
-      const res = await fetch('/api/admin/media', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to upload photo');
-      const uploadedUrl = data.media.url;
-      setImages((prev) => [
-        ...prev,
-        { src: uploadedUrl, alt: name.trim() || 'Product Photo', isPrimary: prev.length === 0 },
-      ]);
-      toast.success('Product image uploaded successfully!');
+      for (const file of files) {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('altText', name.trim() || 'Product Photo');
+        const res = await fetch('/api/admin/media', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (res.ok && data?.media?.url) {
+          const uploadedUrl = data.media.url;
+          setImages((prev) => [
+            ...prev,
+            { src: uploadedUrl, alt: name.trim() || 'Product Photo', isPrimary: prev.length === 0 },
+          ]);
+          successCount++;
+        }
+      }
+      if (successCount > 0) {
+        toast.success(`${successCount} photo${successCount === 1 ? '' : 's'} uploaded to gallery!`);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Photo upload failed');
     } finally {
@@ -657,12 +666,13 @@ export default function ProductForm({ productId }: { productId?: string }) {
               <input
                 ref={mainFileInputRef}
                 type="file"
+                multiple
                 accept="image/jpeg,image/png,image/webp"
                 className="hidden"
                 disabled={uploadingMainImage}
                 onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) void handleUploadMainImage(file);
+                  const files = e.target.files;
+                  if (files && files.length > 0) void handleUploadMainImages(files);
                   e.target.value = '';
                 }}
               />
@@ -675,15 +685,15 @@ export default function ProductForm({ productId }: { productId?: string }) {
                 {uploadingMainImage ? (
                   <>
                     <Loader2 size={18} className="animate-spin text-amber-600" />
-                    <span className="text-xs font-bold">Uploading Photo to R2 Storage...</span>
+                    <span className="text-xs font-bold">Uploading Photo(s) to R2 Storage...</span>
                   </>
                 ) : (
                   <>
                     <UploadCloud size={20} className="text-amber-600 shrink-0" />
                     <div className="text-left">
-                      <p className="text-xs font-bold">Upload Product Photo</p>
+                      <p className="text-xs font-bold">Upload Product Photos (Multi-select supported)</p>
                       <p className="text-[11px] text-slate-500">
-                        Click to browse JPG, PNG or WEBP (up to 5 MB)
+                        Click to select 1 or multiple JPG, PNG or WEBP photos (up to 5 MB each)
                       </p>
                     </div>
                   </>
