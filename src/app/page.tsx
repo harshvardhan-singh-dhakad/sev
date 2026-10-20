@@ -9,6 +9,7 @@ import { SampleCTA } from '@/app/(public)/_sections/SampleCTA';
 import { FAQSection } from '@/app/(public)/_sections/FAQSection';
 import { BlogPreviewSection } from '@/app/(public)/_sections/BlogPreviewSection';
 import { absoluteUrl } from '@/lib/site-url';
+import { connection } from 'next/server';
 import { HomepageBannerCarousel } from '@/components/layout/HomepageBannerCarousel';
 import { getPublishedHomepageBanners, type BannerPlacement } from '@/lib/homepage-banners';
 
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
+  await connection();
   const banners = await getPublishedHomepageBanners();
   const bannerSlot = (placement: BannerPlacement) => (
     <HomepageBannerCarousel

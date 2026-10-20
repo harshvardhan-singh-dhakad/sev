@@ -50,9 +50,9 @@ export function normalizeBanners(input: unknown): HomepageBanner[] {
 }
 
 export async function getAdminHomepageBanners(): Promise<HomepageBanner[]> {
-  const setting = await queryFirst<{ value: string }>('SELECT value FROM settings WHERE key = ?', [SETTING_KEY]);
-  if (!setting?.value) return [];
   try {
+    const setting = await queryFirst<{ value: string }>('SELECT value FROM settings WHERE key = ?', [SETTING_KEY]);
+    if (!setting?.value) return [];
     return normalizeBanners(JSON.parse(setting.value));
   } catch {
     return [];
