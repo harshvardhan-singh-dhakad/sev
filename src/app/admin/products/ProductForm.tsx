@@ -16,6 +16,8 @@ import {
   Layers,
   Image as ImageIcon,
   Sparkles,
+  Percent,
+  Tag,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -35,6 +37,9 @@ interface Pack {
   id?: string;
   label: string;
   weightGrams: string;
+  mrp: string;
+  discountType: 'flat' | 'percent';
+  discountValue: string;
   price: string;
   sku: string;
   stock: string;
@@ -59,6 +64,7 @@ interface ProductData {
     label: string;
     weightGrams: number;
     pricePaise: number;
+    compareAtPricePaise?: number | null;
     sku: string;
     stock: number | null;
     image?: string | null;
@@ -69,6 +75,9 @@ interface ProductData {
 const emptyPack = (label = '', weightGrams = '', defaultSku = ''): Pack => ({
   label,
   weightGrams,
+  mrp: '',
+  discountType: 'flat',
+  discountValue: '',
   price: '',
   sku: defaultSku,
   stock: '',
@@ -192,11 +201,25 @@ export default function ProductForm({ productId }: { productId?: string }) {
                     front = raw;
                   }
                 }
+                const spNum = variant.pricePaise / 100;
+                const mrpNum = variant.compareAtPricePaise ? variant.compareAtPricePaise / 100 : 0;
+                let discountType: 'flat' | 'percent' = 'flat';
+                let discountValue = '';
+
+                if (mrpNum > spNum) {
+                  const diffRs = mrpNum - spNum;
+                  discountType = 'flat';
+                  discountValue = diffRs % 1 === 0 ? String(diffRs) : diffRs.toFixed(2);
+                }
+
                 return {
                   id: variant.id,
                   label: variant.label,
                   weightGrams: String(variant.weightGrams),
-                  price: (variant.pricePaise / 100).toFixed(2),
+                  mrp: mrpNum > 0 ? (mrpNum % 1 === 0 ? String(mrpNum) : mrpNum.toFixed(2)) : '',
+                  discountType,
+                  discountValue,
+                  price: spNum % 1 === 0 ? String(spNum) : spNum.toFixed(2),
                   sku: variant.sku,
                   stock: variant.stock == null ? '' : String(variant.stock),
                   image: front,
@@ -227,6 +250,119 @@ export default function ProductForm({ productId }: { productId?: string }) {
       current.map((pack, i) => (i === index ? { ...pack, [key]: value } : pack))
     );
   };
+
+  // Pricing & Discount Synchronizers
+  function handleMrpChange(index: number, newMrp: string) {
+    setPacks((current) =>
+      current.map((pack, i) => {
+        if (i !== index) return pack;
+        const mrpNum = parseFloat(newMrp);
+        let newPrice = pack.price;
+        let newDiscVal = pack.discountValue;
+
+        if (!isNaN(mrpNum) && mrpNum > 0) {
+          const discNum = parseFloat(pack.discountValue);
+          if (!isNaN(discNum) && discNum > 0) {
+            let sp = 0;
+            if (pack.discountType === 'flat') {
+              sp = Math.max(0, mrpNum - discNum);
+            } else {
+              const safePct = Math.min(100, discNum);
+              sp = Math.max(0, mrpNum - (mrpNum * safePct) / 100);
+            }
+            newPrice = sp > 0 ? (sp % 1 === 0 ? String(sp) : sp.toFixed(2)) : '';
+          } else if (pack.price) {
+            const spNum = parseFloat(pack.price);
+            if (!isNaN(spNum) && spNum > 0 && spNum <= mrpNum) {
+              const diffRs = mrpNum - spNum;
+              if (pack.discountType === 'flat') {
+                newDiscVal = diffRs % 1 === 0 ? String(diffRs) : diffRs.toFixed(2);
+              } else {
+                const diffPct = (diffRs / mrpNum) * 100;
+                newDiscVal = diffPct % 1 === 0 ? String(diffPct) : diffPct.toFixed(1);
+              }
+            }
+          }
+        }
+        return { ...pack, mrp: newMrp, price: newPrice, discountValue: newDiscVal };
+      })
+    );
+  }
+
+  function handleDiscountValueChange(index: number, val: string) {
+    setPacks((current) =>
+      current.map((pack, i) => {
+        if (i !== index) return pack;
+        const mrpNum = parseFloat(pack.mrp);
+        const valNum = parseFloat(val);
+        let newPrice = pack.price;
+
+        if (!isNaN(mrpNum) && mrpNum > 0) {
+          if (!isNaN(valNum) && valNum >= 0) {
+            let sp = 0;
+            if (pack.discountType === 'flat') {
+              sp = Math.max(0, mrpNum - valNum);
+            } else {
+              const safePct = Math.min(100, valNum);
+              sp = Math.max(0, mrpNum - (mrpNum * safePct) / 100);
+            }
+            newPrice = sp > 0 ? (sp % 1 === 0 ? String(sp) : sp.toFixed(2)) : '0';
+          } else {
+            newPrice = mrpNum % 1 === 0 ? String(mrpNum) : mrpNum.toFixed(2);
+          }
+        }
+        return { ...pack, discountValue: val, price: newPrice };
+      })
+    );
+  }
+
+  function handleDiscountTypeToggle(index: number, newType: 'flat' | 'percent') {
+    setPacks((current) =>
+      current.map((pack, i) => {
+        if (i !== index || pack.discountType === newType) return pack;
+        const mrpNum = parseFloat(pack.mrp);
+        const currVal = parseFloat(pack.discountValue);
+        let newDiscVal = pack.discountValue;
+
+        if (!isNaN(mrpNum) && mrpNum > 0 && !isNaN(currVal) && currVal > 0) {
+          if (newType === 'percent') {
+            const pct = (currVal / mrpNum) * 100;
+            newDiscVal = pct % 1 === 0 ? String(pct) : pct.toFixed(1);
+          } else {
+            const flat = (mrpNum * currVal) / 100;
+            newDiscVal = flat % 1 === 0 ? String(flat) : flat.toFixed(2);
+          }
+        }
+        return { ...pack, discountType: newType, discountValue: newDiscVal };
+      })
+    );
+  }
+
+  function handleSellingPriceChange(index: number, newPrice: string) {
+    setPacks((current) =>
+      current.map((pack, i) => {
+        if (i !== index) return pack;
+        const mrpNum = parseFloat(pack.mrp);
+        const spNum = parseFloat(newPrice);
+        let newDiscVal = pack.discountValue;
+
+        if (!isNaN(mrpNum) && mrpNum > 0 && !isNaN(spNum) && spNum > 0) {
+          if (spNum <= mrpNum) {
+            const diffRs = mrpNum - spNum;
+            if (pack.discountType === 'flat') {
+              newDiscVal = diffRs % 1 === 0 ? String(diffRs) : diffRs.toFixed(2);
+            } else {
+              const diffPct = (diffRs / mrpNum) * 100;
+              newDiscVal = diffPct % 1 === 0 ? String(diffPct) : diffPct.toFixed(1);
+            }
+          } else {
+            newDiscVal = '';
+          }
+        }
+        return { ...pack, price: newPrice, discountValue: newDiscVal };
+      })
+    );
+  }
 
   // Upload Main Product Image(s)
   async function handleUploadMainImages(fileList: FileList | File[]) {
@@ -410,6 +546,24 @@ export default function ProductForm({ productId }: { productId?: string }) {
       return;
     }
 
+    // Validate each pack's pricing
+    for (const [idx, pack] of packs.entries()) {
+      const sp = Number(pack.price);
+      if (isNaN(sp) || sp <= 0) {
+        toast.error(`Pack #${idx + 1} (${pack.label || 'Variant'}) ki valid Selling Price enter karein.`);
+        return;
+      }
+      if (pack.mrp) {
+        const mrp = Number(pack.mrp);
+        if (!isNaN(mrp) && mrp > 0 && sp > mrp) {
+          toast.error(
+            `Pack #${idx + 1} (${pack.label || 'Variant'}): Selling price (₹${sp}) MRP (₹${mrp}) se jyada nahi ho sakti!`
+          );
+          return;
+        }
+      }
+    }
+
     // Format gallery images
     const formattedImages = images.map((img, idx) => ({
       src: img.src,
@@ -452,11 +606,13 @@ export default function ProductForm({ productId }: { productId?: string }) {
               } else if (b) {
                 imageVal = b;
               }
+              const mrpNum = pack.mrp ? Number(pack.mrp) : 0;
               return {
                 id: pack.id,
                 label: pack.label,
                 weightGrams: Number(pack.weightGrams),
                 pricePaise: Math.round(Number(pack.price) * 100),
+                compareAtPricePaise: mrpNum > 0 ? Math.round(mrpNum * 100) : null,
                 sku: pack.sku,
                 stock: pack.stock === '' ? null : Number(pack.stock),
                 image: imageVal,
@@ -899,7 +1055,8 @@ export default function ProductForm({ productId }: { productId?: string }) {
                   </div>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 items-start">
+                {/* Pack Basics: Label, Weight, SKU, Stock */}
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 items-start">
                   <label className="form-label block">
                     <span className="text-[11px] font-bold uppercase text-slate-600">
                       Pack label *
@@ -929,22 +1086,6 @@ export default function ProductForm({ productId }: { productId?: string }) {
                   </label>
 
                   <label className="form-label block">
-                    <span className="text-[11px] font-bold uppercase text-slate-600">
-                      Price (₹) *
-                    </span>
-                    <input
-                      required
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      value={pack.price}
-                      onChange={(event) => updatePack(index, 'price', event.target.value)}
-                      placeholder="40.00"
-                      className="form-input mt-1 w-full text-xs font-bold text-slate-900"
-                    />
-                  </label>
-
-                  <label className="form-label block">
                     <span className="text-[11px] font-bold uppercase text-slate-600">SKU *</span>
                     <input
                       required
@@ -966,6 +1107,179 @@ export default function ProductForm({ productId }: { productId?: string }) {
                       className="form-input mt-1 w-full text-xs font-mono"
                     />
                   </label>
+                </div>
+
+                {/* Pricing & Chhoot System (Dual Mode: ₹ Paise/Rupay & % Percentage) */}
+                <div className="mt-3.5 rounded-xl border border-amber-200/90 bg-gradient-to-br from-amber-50/70 via-white to-amber-50/40 p-3.5 space-y-3 shadow-2xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/60 pb-2">
+                    <div className="flex items-center gap-1.5">
+                      <Tag size={14} className="text-amber-600" />
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-900">
+                        Pricing &amp; Chhoot System
+                      </span>
+                    </div>
+
+                    {/* Mode Toggle: ₹ Flat vs % Percentage */}
+                    <div className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-white p-0.5 shadow-2xs">
+                      <span className="text-[10px] font-bold text-slate-500 pl-1.5 pr-0.5">Chhoot Mode:</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDiscountTypeToggle(index, 'flat')}
+                        className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
+                          pack.discountType === 'flat'
+                            ? 'bg-amber-500 text-slate-950 shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        ₹ Rupay Chhoot
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDiscountTypeToggle(index, 'percent')}
+                        className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
+                          pack.discountType === 'percent'
+                            ? 'bg-amber-500 text-slate-950 shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        % Percentage
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-3 items-start">
+                    {/* 1. MRP Field */}
+                    <label className="form-label block">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-slate-700">MRP (Original ₹)</span>
+                        <span className="text-[10px] text-slate-400">Printed rate</span>
+                      </div>
+                      <div className="relative mt-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">₹</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={pack.mrp}
+                          onChange={(e) => handleMrpChange(index, e.target.value)}
+                          placeholder="e.g. 300"
+                          className="form-input w-full pl-7 text-xs font-bold font-mono text-slate-800 bg-white"
+                        />
+                      </div>
+                    </label>
+
+                    {/* 2. Discount / Chhoot Field */}
+                    <label className="form-label block">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-emerald-800">
+                          {pack.discountType === 'flat' ? 'Chhoot (₹ Flat Rupay)' : 'Chhoot (% Percentage)'}
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-600">
+                          {pack.discountType === 'flat' ? '₹ Off' : '% Off'}
+                        </span>
+                      </div>
+                      <div className="relative mt-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-emerald-600">
+                          {pack.discountType === 'flat' ? '₹' : '%'}
+                        </span>
+                        <input
+                          type="number"
+                          min="0"
+                          max={pack.discountType === 'percent' ? 100 : undefined}
+                          step={pack.discountType === 'percent' ? '0.1' : '0.01'}
+                          value={pack.discountValue}
+                          onChange={(e) => handleDiscountValueChange(index, e.target.value)}
+                          placeholder={pack.discountType === 'flat' ? '5 (e.g. ₹5 off)' : '10 (e.g. 10% off)'}
+                          className="form-input w-full pl-7 text-xs font-bold font-mono text-emerald-700 bg-white border-emerald-300 focus:border-emerald-500 focus:ring-emerald-200"
+                        />
+                      </div>
+                    </label>
+
+                    {/* 3. Final Selling Price Field */}
+                    <label className="form-label block">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-black text-slate-900">Selling Price (₹) *</span>
+                        <span className="text-[10px] font-bold text-amber-700">Customer Price</span>
+                      </div>
+                      <div className="relative mt-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-slate-600">₹</span>
+                        <input
+                          required
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          value={pack.price}
+                          onChange={(e) => handleSellingPriceChange(index, e.target.value)}
+                          placeholder="e.g. 295"
+                          className="form-input w-full pl-7 text-xs font-black font-mono text-slate-950 bg-white border-amber-300 focus:border-amber-500 focus:ring-amber-200 shadow-2xs"
+                        />
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Dynamic Status / Helper Preview */}
+                  <div className="pt-2 border-t border-amber-200/50 flex flex-wrap items-center justify-between gap-2">
+                    {(() => {
+                      const mrpNum = parseFloat(pack.mrp) || 0;
+                      const spNum = parseFloat(pack.price) || 0;
+                      const weight = parseFloat(pack.weightGrams) || 0;
+                      const perKg = weight > 0 && spNum > 0 ? Math.round((spNum / weight) * 1000) : 0;
+
+                      if (spNum > 0 && mrpNum > 0) {
+                        if (spNum < mrpNum) {
+                          const saveRs = mrpNum - spNum;
+                          const savePct = Math.round((saveRs / mrpNum) * 1000) / 10;
+                          return (
+                            <>
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100/90 text-emerald-900 font-bold text-[11px] border border-emerald-200">
+                                <Sparkles size={12} className="text-emerald-700 shrink-0" />
+                                Customer Savings: ₹{saveRs.toFixed(2).replace(/\.00$/, '')} ({savePct}% OFF)
+                              </span>
+                              <span className="text-[11px] text-slate-600 font-medium">
+                                MRP: <span className="line-through text-slate-400 font-mono">₹{mrpNum}</span> &rarr; Final:{' '}
+                                <strong className="text-slate-900 font-mono font-black">₹{spNum}</strong>
+                                {perKg > 0 && <span className="text-slate-500 ml-1.5 font-mono">(₹{perKg}/kg)</span>}
+                              </span>
+                            </>
+                          );
+                        }
+                        if (spNum === mrpNum) {
+                          return (
+                            <>
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-medium text-[11px]">
+                                Full MRP &bull; No discount
+                              </span>
+                              <span className="text-[11px] text-slate-600 font-medium font-mono">
+                                Rate: <strong>₹{spNum}</strong>
+                                {perKg > 0 && ` (₹${perKg}/kg)`}
+                              </span>
+                            </>
+                          );
+                        }
+                        return (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-100 text-red-800 font-bold text-[11px] border border-red-200">
+                            ⚠️ Warning: Selling Price (₹{spNum}) MRP (₹{mrpNum}) se jyada nahi ho sakti!
+                          </span>
+                        );
+                      }
+
+                      if (spNum > 0) {
+                        return (
+                          <span className="text-[11px] text-slate-500 font-medium">
+                            Selling Price: <strong className="text-slate-900 font-mono font-bold">₹{spNum}</strong>
+                            {perKg > 0 && <span className="font-mono text-slate-600 ml-1">(₹{perKg}/kg)</span>} &bull;{' '}
+                            <span className="text-slate-400">MRP blank (MRP strike-through nahi dikhegi)</span>
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <span className="text-[11px] text-slate-400">
+                          MRP aur Chhoot (₹ ya %) enter karein, selling price automatically calculate hogi.
+                        </span>
+                      );
+                    })()}
+                  </div>
                 </div>
 
                 {/* Pack-Specific Images (Front & Back Dual Sides) */}
