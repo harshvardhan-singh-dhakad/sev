@@ -5,6 +5,9 @@ import { hasPermission } from '@/lib/auth/permissions';
 
 type Context = { params: Promise<{ id: string }> };
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(_request: NextRequest, context: Context) {
   try {
     const admin = await getAuthenticatedAdmin();
@@ -170,9 +173,16 @@ export async function PUT(request: NextRequest, context: Context) {
 
     await d1Batch(statements);
     return NextResponse.json({ success: true, id });
-  } catch (error) {
+  } catch (error: any) {
     console.error('PUT /api/products/[id] error:', error);
-    return NextResponse.json({ error: 'Product could not be updated. Check the slug and SKU are unique.' }, { status: 400 });
+    const msg = error?.message || String(error);
+    if (msg.includes('UNIQUE constraint failed: products.slug')) {
+      return NextResponse.json({ error: 'Yeh product URL slug pehle se kisi aur product dwara use ho raha hai.' }, { status: 409 });
+    }
+    if (msg.includes('UNIQUE constraint failed: product_variants.sku')) {
+      return NextResponse.json({ error: 'Pack variant SKU pehle se kisi aur product me use ho chuka hai. Kripya unique SKU dalein.' }, { status: 409 });
+    }
+    return NextResponse.json({ error: msg || 'Product could not be updated.' }, { status: 400 });
   }
 }
 

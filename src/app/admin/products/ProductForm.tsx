@@ -18,6 +18,7 @@ import {
   Sparkles,
   Percent,
   Tag,
+  PlusCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -72,6 +73,15 @@ interface ProductData {
   }>;
 }
 
+export function generateCleanSku(productNameOrSlug: string, weightGrams: string | number, index: number = 0): string {
+  const prefix = (productNameOrSlug || 'SEV')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 6) || 'SEV';
+  const wt = weightGrams ? `${weightGrams}G` : `${index + 1}`;
+  return `${prefix}-${wt}`;
+}
+
 const emptyPack = (label = '', weightGrams = '', defaultSku = ''): Pack => ({
   label,
   weightGrams,
@@ -98,6 +108,7 @@ export default function ProductForm({ productId }: { productId?: string }) {
   const [categoryId, setCategoryId] = useState('');
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
   const [shortDescription, setShortDescription] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('active');
@@ -108,7 +119,7 @@ export default function ProductForm({ productId }: { productId?: string }) {
   const [manualImageUrl, setManualImageUrl] = useState('');
 
   // Packs / Variants State
-  const [packs, setPacks] = useState<Pack[]>([emptyPack('250 g', '250', '')]);
+  const [packs, setPacks] = useState<Pack[]>([emptyPack('250 g', '250', 'SEV-250G')]);
   const [uploadingPackSide, setUploadingPackSide] = useState<{ index: number; side: 'front' | 'back' } | null>(null);
 
   // Quick Category Creation State
@@ -507,10 +518,16 @@ export default function ProductForm({ productId }: { productId?: string }) {
     }
   }
 
-  // Add standard pack presets
+  // Add standard pack presets with auto-unique collision-free SKUs
   function handleAddPresetPack(label: string, weightGrams: string) {
-    const slugPrefix = (slug || name || 'PRD').toUpperCase().slice(0, 4);
-    const sku = `${slugPrefix}-${weightGrams}G`;
+    const cleanPrefix = (slug || name || 'SEV')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 6) || 'SEV';
+    let sku = `${cleanPrefix}-${weightGrams}G`;
+    if (packs.some((p) => p.sku === sku)) {
+      sku = `${cleanPrefix}-${weightGrams}G-${packs.length + 1}`;
+    }
     setPacks((current) => [...current, emptyPack(label, weightGrams, sku)]);
   }
 
@@ -531,6 +548,7 @@ export default function ProductForm({ productId }: { productId?: string }) {
       if (!res.ok) throw new Error(data.error || 'Failed to delete product');
       toast.success(data.message || 'Product deleted successfully!');
       router.push('/admin/products');
+      router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Delete failed');
       setDeleting(false);
@@ -538,7 +556,7 @@ export default function ProductForm({ productId }: { productId?: string }) {
   }
 
   // Form Submit
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: React.FormEvent<HTMLFormElement>, andAddAnother = false) {
     event.preventDefault();
     const category = categories.find((item) => item.id === categoryId);
     if (!category) {
@@ -576,6 +594,21 @@ export default function ProductForm({ productId }: { productId?: string }) {
     const primaryImg =
       packs[0]?.image || images.find((img) => img.isPrimary)?.src || images[0]?.src || '';
 
+    // Auto-deduplicate SKUs within form
+    const currentSkus = new Set<string>();
+    const sanitizedPacks = packs.map((pack, idx) => {
+      let packSku = (pack.sku || '').trim().toUpperCase();
+      if (!packSku) {
+        const cleanPrefix = (slug || name || 'SEV').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) || 'SEV';
+        packSku = `${cleanPrefix}-${pack.weightGrams || 250}G`;
+      }
+      if (currentSkus.has(packSku)) {
+        packSku = `${packSku}-${idx + 1}`;
+      }
+      currentSkus.add(packSku);
+      return { ...pack, sku: packSku };
+    });
+
     setSaving(true);
     try {
       const response = await fetch(
@@ -595,7 +628,7 @@ export default function ProductForm({ productId }: { productId?: string }) {
             storage: 'Store in a cool, dry place away from direct sunlight',
             images: formattedImages,
             thumbnail: primaryImg,
-            variants: packs.map((pack) => {
+            variants: sanitizedPacks.map((pack) => {
               let imageVal: string | null = null;
               const f = pack.image?.trim();
               const b = pack.backImage?.trim();
@@ -624,14 +657,29 @@ export default function ProductForm({ productId }: { productId?: string }) {
       );
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Product could not be saved.');
-      toast.success(
-        productId
-          ? 'Product updated successfully.'
-          : status === 'active'
-            ? 'Product published to shop catalog!'
-            : 'Product saved as a draft.'
-      );
-      router.push('/admin/products');
+
+      if (andAddAnother && !productId) {
+        toast.success(`"${name}" save ho gaya! Agla product add karne ke liye form tayar hai.`);
+        setName('');
+        setSlug('');
+        setIsSlugManuallyEdited(false);
+        setShortDescription('');
+        setDescription('');
+        setImages([]);
+        setManualImageUrl('');
+        setPacks([emptyPack('250 g', '250', 'SEV-250G')]);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        toast.success(
+          productId
+            ? 'Product updated successfully.'
+            : status === 'active'
+              ? 'Product published to shop catalog!'
+              : 'Product saved as a draft.'
+        );
+        router.push('/admin/products');
+        router.refresh();
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Product could not be saved.');
     } finally {
@@ -707,13 +755,25 @@ export default function ProductForm({ productId }: { productId?: string }) {
                 onChange={(event) => {
                   const value = event.target.value;
                   setName(value);
-                  if (!slug)
-                    setSlug(
-                      value
-                        .toLowerCase()
-                        .replace(/[^a-z0-9]+/g, '-')
-                        .replace(/(^-|-$)/g, '')
+                  if (!isSlugManuallyEdited) {
+                    const autoSlug = value
+                      .toLowerCase()
+                      .replace(/[^a-z0-9]+/g, '-')
+                      .replace(/(^-|-$)/g, '');
+                    setSlug(autoSlug);
+                  }
+                  // Auto-update default pack SKUs
+                  const cleanPrefix = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+                  if (cleanPrefix) {
+                    setPacks((current) =>
+                      current.map((p, i) => {
+                        if (!p.sku || p.sku.startsWith('SEV-') || p.sku.startsWith('PRD-')) {
+                          return { ...p, sku: `${cleanPrefix}-${p.weightGrams || 250}G` };
+                        }
+                        return p;
+                      })
                     );
+                  }
                 }}
                 placeholder="e.g. Ujjaini Hing Sev"
                 className="form-input mt-1.5 w-full text-sm font-medium"
@@ -721,12 +781,20 @@ export default function ProductForm({ productId }: { productId?: string }) {
             </label>
 
             <label className="form-label block">
-              <span className="text-xs font-bold uppercase text-slate-700">URL slug *</span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase text-slate-700">URL slug *</span>
+                <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                  <CheckCircle2 size={11} className="text-emerald-600" /> Auto-unique safe
+                </span>
+              </div>
               <input
                 required
                 pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
                 value={slug}
-                onChange={(event) => setSlug(event.target.value)}
+                onChange={(event) => {
+                  setIsSlugManuallyEdited(true);
+                  setSlug(event.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, ''));
+                }}
                 placeholder="ujjaini-hing-sev"
                 className="form-input mt-1.5 w-full text-sm font-mono text-slate-700"
               />
@@ -1086,11 +1154,26 @@ export default function ProductForm({ productId }: { productId?: string }) {
                   </label>
 
                   <label className="form-label block">
-                    <span className="text-[11px] font-bold uppercase text-slate-600">SKU *</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold uppercase text-slate-600">SKU *</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const cleanPrefix = (slug || name || 'SEV').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) || 'SEV';
+                          const randomCode = Math.random().toString(36).substring(2, 5).toUpperCase();
+                          updatePack(index, 'sku', `${cleanPrefix}-${pack.weightGrams || 250}G-${randomCode}`);
+                          toast.success('Unique SKU generated!');
+                        }}
+                        className="text-[10px] text-amber-600 font-bold hover:underline"
+                        title="Click to generate random unique SKU"
+                      >
+                        Auto-generate
+                      </button>
+                    </div>
                     <input
                       required
                       value={pack.sku}
-                      onChange={(event) => updatePack(index, 'sku', event.target.value)}
+                      onChange={(event) => updatePack(index, 'sku', event.target.value.toUpperCase())}
                       placeholder="SEV-100G"
                       className="form-input mt-1 w-full text-xs font-mono"
                     />
@@ -1460,14 +1543,29 @@ export default function ProductForm({ productId }: { productId?: string }) {
               </button>
             ) : <div />}
 
-            <button
-              type="submit"
-              disabled={saving || deleting || categories.length === 0}
-              className="btn btn-primary h-[44px] px-8 text-sm font-bold shadow-md inline-flex items-center gap-2"
-            >
-              <Save size={16} />
-              {saving ? 'Saving product…' : productId ? 'Update product' : 'Save product'}
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              {!productId && (
+                <button
+                  type="button"
+                  disabled={saving || deleting || categories.length === 0}
+                  onClick={(e) => void submit(e as any, true)}
+                  className="btn btn-outline border-amber-300 bg-amber-50/70 hover:bg-amber-100 text-amber-900 h-[44px] px-5 text-sm font-bold inline-flex items-center gap-2 shadow-2xs"
+                  title="Save this product and immediately open a blank form to add your next product"
+                >
+                  <PlusCircle size={16} className="text-amber-700" />
+                  {saving ? 'Saving...' : 'Save & Add Another'}
+                </button>
+              )}
+
+              <button
+                type="submit"
+                disabled={saving || deleting || categories.length === 0}
+                className="btn btn-primary h-[44px] px-8 text-sm font-bold shadow-md inline-flex items-center gap-2"
+              >
+                <Save size={16} />
+                {saving ? 'Saving product…' : productId ? 'Update product' : 'Save & Close'}
+              </button>
+            </div>
           </div>
         )}
       </form>

@@ -3,6 +3,9 @@ import { d1Batch, d1Query } from '@/lib/d1';
 import { getAuthenticatedAdmin } from '@/lib/auth/session';
 import { hasPermission } from '@/lib/auth/permissions';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -122,7 +125,16 @@ export async function GET(request: NextRequest) {
         })),
     }));
 
-    return NextResponse.json({ products });
+    return NextResponse.json(
+      { products },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          Pragma: 'no-cache',
+          Expires: '0',
+        },
+      }
+    );
   } catch (error) {
     console.error('GET /api/products error:', error);
     return NextResponse.json({ error: 'Products could not be loaded. Check the database connection and migrations.' }, { status: 500 });
@@ -132,9 +144,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const admin = await getAuthenticatedAdmin();
-    if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!admin) return NextResponse.json({ error: 'Unauthorized. Please login again.' }, { status: 401 });
     if (!hasPermission(admin.role, 'catalog', 'create')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Forbidden. You do not have permission to create products.' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -150,27 +162,143 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'You do not have permission to publish products' }, { status: 403 });
     }
 
-    if (typeof name !== 'string' || typeof slug !== 'string' || !name.trim() || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
-      return NextResponse.json({ error: 'Name and slug are required' }, { status: 400 });
+    if (typeof name !== 'string' || !name.trim()) {
+      return NextResponse.json({ error: 'Product name is required.' }, { status: 400 });
     }
-    if (!Array.isArray(variants) || variants.length === 0 || variants.length > 10 || variants.some((variant) =>
-      !variant || typeof variant.label !== 'string' || !Number.isInteger(variant.weightGrams) || variant.weightGrams <= 0 ||
-      !Number.isInteger(variant.pricePaise) || variant.pricePaise <= 0 || typeof variant.sku !== 'string' || !variant.sku.trim()
-    )) {
-      return NextResponse.json({ error: 'Add valid packs with a label, weight, price, and SKU.' }, { status: 400 });
+
+    // 1. Clean and Auto-Resolve URL Slug (guarantees no unique constraint crashes)
+    let cleanSlug = typeof slug === 'string' && slug.trim()
+      ? slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      : name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+    if (!cleanSlug) {
+      cleanSlug = `product-${Date.now().toString(36)}`;
+    }
+
+    let finalSlug = cleanSlug;
+    let slugCounter = 1;
+    while (true) {
+      const existingSlug = await d1Query<{ id: string }>(
+        'SELECT id FROM products WHERE slug = ? LIMIT 1',
+        [finalSlug]
+      );
+      if (existingSlug.results.length === 0) break;
+      slugCounter++;
+      finalSlug = `${cleanSlug}-${slugCounter}`;
+    }
+
+    // 2. Validate Variants/Packs
+    if (!Array.isArray(variants) || variants.length === 0) {
+      return NextResponse.json({ error: 'At least one pack variant is required.' }, { status: 400 });
+    }
+
+    // 3. Resolve Category
+    let resolvedCategorySlug = typeof categorySlug === 'string' ? categorySlug : '';
+    let resolvedCategoryId = categoryId ? String(categoryId) : null;
+    if (resolvedCategoryId) {
+      const category = await d1Query<{ id: string; slug: string }>(
+        'SELECT id, slug FROM product_categories WHERE id = ? LIMIT 1',
+        [resolvedCategoryId]
+      );
+      if (category.results[0]) {
+        resolvedCategorySlug = category.results[0].slug;
+      }
+    }
+    if (!resolvedCategorySlug) {
+      // Fallback to first active category if available
+      const defaultCat = await d1Query<{ id: string; slug: string }>(
+        'SELECT id, slug FROM product_categories WHERE status = "active" ORDER BY display_order ASC LIMIT 1'
+      );
+      if (defaultCat.results[0]) {
+        resolvedCategoryId = defaultCat.results[0].id;
+        resolvedCategorySlug = defaultCat.results[0].slug;
+      }
+    }
+    if (!resolvedCategorySlug) {
+      return NextResponse.json({ error: 'Choose a category for this product.' }, { status: 400 });
     }
 
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
-    let resolvedCategorySlug = typeof categorySlug === 'string' ? categorySlug : '';
-    if (categoryId) {
-      const category = await d1Query<{ slug: string }>('SELECT slug FROM product_categories WHERE id = ? LIMIT 1', [String(categoryId)]);
-      resolvedCategorySlug = category.results[0]?.slug || resolvedCategorySlug;
-    }
-    if (!resolvedCategorySlug) return NextResponse.json({ error: 'Choose a category for this product.' }, { status: 400 });
-
     const productImages = Array.isArray(images) ? images : [];
     const productStatus = status === 'active' ? 'published' : status || 'draft';
+
+    // 4. Auto-generate and Auto-Deduplicate Variant SKUs
+    const usedSkusInBatch = new Set<string>();
+    const processedVariants: Array<{
+      variantId: string;
+      label: string;
+      weight: number;
+      price: number;
+      compareAtPrice: number | null;
+      sku: string;
+      stock: number | null;
+      variantImage: string | null;
+    }> = [];
+
+    for (const [index, variant] of variants.entries()) {
+      const variantId = crypto.randomUUID();
+      const weight = Number(variant.weightGrams);
+      if (!Number.isFinite(weight) || weight <= 0) {
+        return NextResponse.json({ error: `Pack #${index + 1} ki weight valid grams me honi chahiye.` }, { status: 400 });
+      }
+
+      const price = Number(variant.pricePaise);
+      if (!Number.isFinite(price) || price <= 0) {
+        return NextResponse.json({ error: `Pack #${index + 1} ki selling price enter karein.` }, { status: 400 });
+      }
+
+      const compareAtPrice =
+        variant.compareAtPricePaise != null && Number(variant.compareAtPricePaise) > 0
+          ? Number(variant.compareAtPricePaise)
+          : null;
+      const stock = variant.stock === '' || variant.stock == null ? null : Number(variant.stock);
+      const variantImage = variant.image ? String(variant.image).trim() : null;
+      const label = typeof variant.label === 'string' && variant.label.trim()
+        ? variant.label.trim()
+        : `${weight >= 1000 ? `${weight / 1000} kg` : `${weight} g`}`;
+
+      // Smart SKU Generation:
+      let baseSku = typeof variant.sku === 'string' && variant.sku.trim()
+        ? variant.sku.trim().toUpperCase()
+        : `${finalSlug.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8)}-${weight}G`;
+
+      if (!baseSku) baseSku = `SKU-${weight}G`;
+
+      // Guarantee 100% database & batch uniqueness for SKU
+      let finalSku = baseSku;
+      let skuCounter = 1;
+      while (true) {
+        if (usedSkusInBatch.has(finalSku.toUpperCase())) {
+          skuCounter++;
+          finalSku = `${baseSku}-${skuCounter}`;
+          continue;
+        }
+
+        const existingSku = await d1Query<{ id: string }>(
+          'SELECT id FROM product_variants WHERE UPPER(sku) = UPPER(?) LIMIT 1',
+          [finalSku]
+        );
+        if (existingSku.results.length === 0) break;
+        skuCounter++;
+        finalSku = `${baseSku}-${skuCounter}`;
+      }
+
+      usedSkusInBatch.add(finalSku.toUpperCase());
+
+      processedVariants.push({
+        variantId,
+        label,
+        weight,
+        price,
+        compareAtPrice,
+        sku: finalSku,
+        stock,
+        variantImage,
+      });
+    }
+
+    // 5. Batch insert product and variants
     const statements = [{
       sql: `INSERT INTO products (
         id, name, slug, category_slug, short_description, description, spice_level, storage,
@@ -180,38 +308,56 @@ export async function POST(request: NextRequest) {
         og_image, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'India', ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       params: [
-        id, name, slug, resolvedCategorySlug, shortDescription || '', longDescription || '', spiceLevel || 'mild',
-        storage || storageInstructions || '', vegMark || 'veg', productStatus, featured ? 1 : 0, categoryId || null,
+        id, name.trim(), finalSlug, resolvedCategorySlug, shortDescription || '', longDescription || '', spiceLevel || 'mild',
+        storage || storageInstructions || '', vegMark || 'veg', productStatus, featured ? 1 : 0, resolvedCategoryId,
         longDescription || '', JSON.stringify(productImages), thumbnail || productImages[0]?.src || null,
         ingredients || null, tasteProfile || null, texture || null, storageInstructions || storage || '',
         packagingInfo || null, gstRate || 5, hsn || null, bestSeller ? 1 : 0, isNew ? 1 : 0,
         recommended ? 1 : 0, seoTitle || null, seoDescription || null, seoKeywords || null, ogImage || null, now, now,
       ],
     }];
-    for (const [index, variant] of variants.entries()) {
-      const variantId = crypto.randomUUID();
-      const weight = Number(variant.weightGrams);
-      const price = Number(variant.pricePaise);
-      const compareAtPrice =
-        variant.compareAtPricePaise != null && Number(variant.compareAtPricePaise) > 0
-          ? Number(variant.compareAtPricePaise)
-          : null;
-      const stock = variant.stock === '' || variant.stock == null ? null : Number(variant.stock);
-      const variantImage = variant.image ? String(variant.image).trim() : null;
+
+    for (const [index, pv] of processedVariants.entries()) {
       statements.push({
         sql: `INSERT INTO product_variants (
           id, product_id, label, weight_grams, price_paise, compare_at_price, sku, stock_qty, min_qty, max_qty,
           step, is_active, sort_order, created_at, updated_at, name, weight, price, stock, status, image
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, NULL, 1, 1, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
-        params: [variantId, id, variant.label, weight, price, compareAtPrice, variant.sku.trim(), stock, index, now, now,
-          variant.label, variant.label, price, stock, variantImage],
+        params: [
+          pv.variantId, id, pv.label, pv.weight, pv.price, pv.compareAtPrice, pv.sku, pv.stock, index, now, now,
+          pv.label, pv.label, pv.price, pv.stock, pv.variantImage
+        ],
       });
     }
+
     await d1Batch(statements);
 
-    return NextResponse.json({ success: true, id }, { status: 201 });
-  } catch (error) {
+    return NextResponse.json({
+      success: true,
+      id,
+      slug: finalSlug,
+      message: 'Product listing successfully created!',
+    }, {
+      status: 201,
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    });
+  } catch (error: any) {
     console.error('POST /api/products error:', error);
-    return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
+    const msg = error?.message || String(error);
+    if (msg.includes('UNIQUE constraint failed: products.slug')) {
+      return NextResponse.json(
+        { error: 'Product URL slug already exists. Please choose a different slug.' },
+        { status: 409 }
+      );
+    }
+    if (msg.includes('UNIQUE constraint failed: product_variants.sku')) {
+      return NextResponse.json(
+        { error: 'Variant SKU already exists. Each pack must have a unique SKU.' },
+        { status: 409 }
+      );
+    }
+    return NextResponse.json({ error: msg || 'Failed to create product' }, { status: 500 });
   }
 }
